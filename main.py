@@ -46,7 +46,7 @@ import numpy as np
 from plot_entity import PlotEntity
 from finder_deepface import work_plot_entity
 from PyQt5.QtWidgets import QSpacerItem, QSizePolicy
-from config import timer_log_update_update_interval, timer_human_update_update_interval, timer_merge_by_face_timestep
+from config import timer_log_update_update_interval, timer_human_update_update_interval, timer_merge_by_face_timestep, load_all_config
 torch.set_num_threads(1)
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
@@ -154,6 +154,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             if isinstance(ph, PlotEntity):
                 if ph.hdb is not None:
                     add_human_to_db(session, ph.hdb.name , ph.hdb.images_face, ph.hdb.log_images, ph.hdb.idx, ph.hdb.db_id)
+        load_all_config()
         pass
     
     def create_push_human_slot(self, images, name):

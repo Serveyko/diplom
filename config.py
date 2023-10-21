@@ -28,8 +28,9 @@ deepface_detector_backend = 'retinaface'
 person = 0
 handbag = 26
 suitcase = 28
+backpack = 24
 white_list_person = [person]
-white_list_handbag = [handbag, suitcase]
+white_list_handbag = [handbag, suitcase, backpack]
 
 all_white_list = []
 all_white_list.extend(white_list_person)
@@ -59,6 +60,10 @@ intersection_kad_a = 1
 timer_log_update_update_interval = 1000
 timer_human_update_update_interval = 1000
 timer_merge_by_face_timestep = 1000
+
+
+
+push_tracks_state_in_circle_intersection_area = 20
 
 """param_yolov8_detect_model_path = Parameter(name='yolov8_detect_model_path', original_value=r"D:\MY_WORKS\FindHumans\yolov8n.pt")
     param_main_process_count_frames = Parameter(name='main_process_count_frames', original_value=1)
@@ -123,93 +128,110 @@ timer_merge_by_face_timestep = 1000
     session.commit()"""
 
 
+def load_all_config():
+    global yolov8_detect_model_path
+    global main_process_timer_timestep
+    global main_process_timer_small_timestep
+    global standart_width
+    global standart_height
+    global timeout_is_file_widget
+    global timeout_widget
+    global resize_with_width
+    global deepface_detector_backend
+    global pair_maxlen
+    global pair_magic_one
+    global pair_magic_two
+    global pair_threshold_one
+    global pair_threshold_two
+    global entity_max_len_deque_images_camera
+    global entity_after_reconfig_bag_group_percent_area
+    global pairs_manager_max_len_deque_points_id
+    global pairs_manager_intersection_human_percent_area
+    global pairs_manager_intersection_bag_percent_area
+    global intersection_percent_area
+    global intersection_kad_a
+    global timer_log_update_update_interval
+    global timer_human_update_update_interval
+    global timer_merge_by_face_timestep
 
-loaded_params = start_load_save_params(session, params_dict)
+    loaded_params = start_load_save_params(session, params_dict)
 
-for sparam in loaded_params:
-    if isinstance(sparam, Parameter):
-        name = sparam.name
-        if name == 'yolov8_detect_model_path':
-            yolov8_detect_model_path = sparam.current_value
-            pass
-        elif name == 'main_process_timer_timestep':
-            main_process_timer_timestep = sparam.current_value
-            pass
-        elif name == 'main_process_timer_small_timestep':
-            main_process_timer_small_timestep = sparam.current_value
-            pass
-        elif name == 'standart_width':
-            standart_width = sparam.current_value
-            pass
-        elif name == 'standart_height':
-            standart_height = sparam.current_value
-            pass
-        elif name == 'timeout_is_file_widget':
-            timeout_is_file_widget = sparam.current_value
-            pass
-        elif name == 'timeout_widget':
-            timeout_widget = sparam.current_value
-            pass
-        elif name == 'resize_with_width':
-            resize_with_width = sparam.current_value
-            pass
-        elif name == 'deepface_detector_backend':
-            deepface_detector_backend = sparam.current_value
-            pass
-        elif name == 'person':
-            person = sparam.current_value
-            pass
-        elif name == 'handbag':
-            handbag = sparam.current_value
-            pass
-        elif name == 'suitcase':
-            suitcase = sparam.current_value
-            pass
-        elif name == 'pair_maxlen':
-            pair_maxlen = sparam.current_value
-            pass
-        elif name == 'pair_magic_one':
-            pair_magic_one = sparam.current_value
-            pass
-        elif name == 'pair_magic_two':
-            pair_magic_two = sparam.current_value
-            pass
-        elif name == 'pair_threshold_one':
-            pair_threshold_one = sparam.current_value
-            pass
-        elif name == 'pair_threshold_two':
-            pair_threshold_two = sparam.current_value
-            pass
-        elif name == 'entity_max_len_deque_images_camera':
-            entity_max_len_deque_images_camera = sparam.current_value
-            pass
-        elif name == 'entity_after_reconfig_bag_group_percent_area':
-            entity_after_reconfig_bag_group_percent_area = sparam.current_value
-            pass
-        elif name == 'pairs_manager_max_len_deque_points_id':
-            pairs_manager_max_len_deque_points_id = sparam.current_value
-            pass
-        elif name == 'pairs_manager_intersection_human_percent_area':
-            pairs_manager_intersection_human_percent_area = sparam.current_value
-            pass
-        elif name == 'pairs_manager_intersection_bag_percent_area':
-            pairs_manager_intersection_bag_percent_area = sparam.current_value
-            pass
-        elif name == 'intersection_percent_area':
-            intersection_percent_area = sparam.current_value
-            pass
-        elif name == 'intersection_kad_a':
-            intersection_kad_a = sparam.current_value
-            pass
-        elif name == 'timer_log_update_update_interval':
-            timer_log_update_update_interval = sparam.current_value
-            pass
-        elif name == 'timer_human_update_update_interval':
-            timer_human_update_update_interval = sparam.current_value
-            pass
-        elif name == 'timer_merge_by_face_timestep':
-            timer_merge_by_face_timestep = sparam.current_value
-            pass
+    for sparam in loaded_params:
+        if isinstance(sparam, Parameter):
+            name = sparam.name
+            if name == 'yolov8_detect_model_path':
+                yolov8_detect_model_path = sparam.current_value
+                pass
+            elif name == 'main_process_timer_timestep':
+                main_process_timer_timestep = sparam.current_value
+                pass
+            elif name == 'main_process_timer_small_timestep':
+                main_process_timer_small_timestep = sparam.current_value
+                pass
+            elif name == 'standart_width':
+                standart_width = sparam.current_value
+                pass
+            elif name == 'standart_height':
+                standart_height = sparam.current_value
+                pass
+            elif name == 'timeout_is_file_widget':
+                timeout_is_file_widget = sparam.current_value
+                pass
+            elif name == 'timeout_widget':
+                timeout_widget = sparam.current_value
+                pass
+            elif name == 'resize_with_width':
+                resize_with_width = sparam.current_value
+                pass
+            elif name == 'deepface_detector_backend':
+                deepface_detector_backend = sparam.current_value
+                pass
+            elif name == 'pair_maxlen':
+                pair_maxlen = sparam.current_value
+                pass
+            elif name == 'pair_magic_one':
+                pair_magic_one = sparam.current_value
+                pass
+            elif name == 'pair_magic_two':
+                pair_magic_two = sparam.current_value
+                pass
+            elif name == 'pair_threshold_one':
+                pair_threshold_one = sparam.current_value
+                pass
+            elif name == 'pair_threshold_two':
+                pair_threshold_two = sparam.current_value
+                pass
+            elif name == 'entity_max_len_deque_images_camera':
+                entity_max_len_deque_images_camera = sparam.current_value
+                pass
+            elif name == 'entity_after_reconfig_bag_group_percent_area':
+                entity_after_reconfig_bag_group_percent_area = sparam.current_value
+                pass
+            elif name == 'pairs_manager_max_len_deque_points_id':
+                pairs_manager_max_len_deque_points_id = sparam.current_value
+                pass
+            elif name == 'pairs_manager_intersection_human_percent_area':
+                pairs_manager_intersection_human_percent_area = sparam.current_value
+                pass
+            elif name == 'pairs_manager_intersection_bag_percent_area':
+                pairs_manager_intersection_bag_percent_area = sparam.current_value
+                pass
+            elif name == 'intersection_percent_area':
+                intersection_percent_area = sparam.current_value
+                pass
+            elif name == 'intersection_kad_a':
+                intersection_kad_a = sparam.current_value
+                pass
+            elif name == 'timer_log_update_update_interval':
+                timer_log_update_update_interval = sparam.current_value
+                pass
+            elif name == 'timer_human_update_update_interval':
+                timer_human_update_update_interval = sparam.current_value
+                pass
+            elif name == 'timer_merge_by_face_timestep':
+                timer_merge_by_face_timestep = sparam.current_value
+                pass
 
+load_all_config()
 
 

@@ -14,6 +14,8 @@ from framework import EntityManager
 
 torch.set_num_threads(1)
 
+counter_f = 0
+
 def find(
     frame: FrameData, 
     device='cpu'
@@ -35,10 +37,10 @@ def find(
             cls_boxes = boxes.cls
             ci = get_object_names_with_indices(cls_boxes, names2)
             annotated_frame = result.plot()  
-            annotated_frame = resize_with_aspect_ratio(
+            """annotated_frame = resize_with_aspect_ratio(
                 annotated_frame, 
                 new_width=resize_with_width
-            )
+            )"""
         
         frame.real_frame = real_frame
         frame.yolov8 = result
@@ -83,7 +85,7 @@ def find(
                 tracker = trackers_capacitor.create_basic_tracker(dataframe_uid)
                 if isinstance(tracker, DeepSort):
                     tracks = tracker.update_tracks(dp, frame=real_frame) 
-                
+        
         entities = pman.push_tracks(tracks, dataframe_uid, trackers_capacitor)
         
         if len(entities) > 0:
@@ -157,8 +159,12 @@ def find(
                         (255, 255, 255),
                         2
                     )
-        
-        frame.set_frame(plot_frame)
+        global counter_f
+        if counter_f % 2 == 0:
+            frame.set_frame(plot_frame)
+        else:
+            frame.set_frame(annotated_frame)
+        counter_f += 1
         
         logs, humans_and_bags = None, None
         array_keys_entity = []

@@ -10,7 +10,7 @@ from config import white_list_handbag, white_list_person, pair_maxlen, pair_magi
 from config import pair_threshold_one, pair_threshold_two, entity_max_len_deque_images_camera
 from config import pairs_manager_max_len_deque_points_id, entity_after_reconfig_bag_group_percent_area
 from config import intersection_percent_area, intersection_kad_a, pairs_manager_intersection_human_percent_area
-from config import pairs_manager_intersection_bag_percent_area
+from config import pairs_manager_intersection_bag_percent_area, push_tracks_state_in_circle_intersection_area
 
 from PyQt5.QtCore import QMutex
 
@@ -567,8 +567,8 @@ class Pair:
         
         self.last_time_update = None
         
-        self.pre_cold = False 
-        self.cold = False
+        #self.pre_cold = False 
+        #self.cold = False
     
     def get_len(self):
         return len(self.intersection_array)
@@ -1225,6 +1225,7 @@ class PairsManager:
         
         self.human_groups = []
         self.bags_groups = []
+        self.locker = QMutexContextManager()
     
     def get_bags_and_humans_by_logs(self, logs):
         if len(logs) > 0:
@@ -1367,6 +1368,14 @@ class PairsManager:
                                                 a = calculate_intersection_area_ltrb(last_point1, last_point2)
                                                 cb = check_box_relationship(last_point1, last_point2)
                                                 
+                                                
+                                                """c_1, r__1 = box_to_circle(last_point1)
+                                                c_2, r__2 = box_to_circle(last_point2)
+
+                                                intersection_area, percentage_intersection = circle_intersection_area(r__1, c_1, r__2, c_2)
+                                                a = percentage_intersection
+                                                
+                                                """
                                                 if a >= percent_area or cb[0] is True:
                                                     result_intersection_human.append((
                                                         (human1.human_id, human2.human_id),
@@ -1432,10 +1441,11 @@ class PairsManager:
                                             last_point2
                                         )
                                         
-                                        #c_1, r__1 = box_to_circle(last_point1)
-                                        #c_2, r__2 = box_to_circle(last_point2)
+                                        """c_1, r__1 = box_to_circle(last_point1)
+                                        c_2, r__2 = box_to_circle(last_point2)
 
-                                        #intersection_area, percentage_intersection = circle_intersection_area(r__1, c_1, r__2, c_2)
+                                        intersection_area, percentage_intersection = circle_intersection_area(r__1, c_1, r__2, c_2)
+                                        a = percentage_intersection"""
 
                                         if a >= percent_area or cb[0] is True:
                                             result_intersection_bag.append((
@@ -1456,7 +1466,7 @@ class PairsManager:
             
             for pone in self.pairs:
                 if isinstance(pone, Pair):
-                    if pone.id_camera == id_current_camera and not pone.cold:
+                    if pone.id_camera == id_current_camera:# and not pone.cold:
                         # Перевіряємо, чи ID пари є в current_pairs_ids
                         if pone.current_id not in current_pairs_ids:
                             pone.pre_cold = True
@@ -1513,353 +1523,370 @@ class PairsManager:
         
         if trackers_capacitor is not None and isinstance(trackers_capacitor, TrackersCapacitor):
             
-            for track in tracks:
-                if not track.is_confirmed() or track.time_since_update > 1:
-                    continue
-                bbox = track.to_ltrb()
-                original_ltwh = track.original_ltwh
-            
-                if track.det_class in self.human_ids:
-                    h = self.find_human(trackers_capacitor.get_uid_human(int(id_camera), int(track.track_id), int(track.det_class)) )
-                    if h is None:
-                        h = Human(
-                            human_id=trackers_capacitor.get_uid_human(int(id_camera), int(track.track_id), int(track.det_class)),
-                            det_class=track.det_class
-                            )
-                        h.append(id_camera, (bbox, original_ltwh))
-                        self.append_human(h)
-                    else:
-                        h.append(id_camera, (bbox, original_ltwh)) 
-                        
-                elif track.det_class in self.bag_ids:
-                    b = self.find_bag(trackers_capacitor.get_uid_bag(int(id_camera), int(track.track_id), int(track.det_class)))
-                    if b is None:
-                        b = Bag(
-                            bag_id=trackers_capacitor.get_uid_bag(int(id_camera), int(track.track_id), int(track.det_class)),
-                            det_class=track.det_class
-                            )
-                        b.append(id_camera, (bbox, original_ltwh))
-                        self.append_bag(b)
-                    else:
-                        b.append(id_camera, (bbox, original_ltwh))
-            
-            
-            self.enable_track_camera_id(id_camera)
-            
-            result_intersection_human = self.intersection_human(id_camera)
-            
-            result_intersection_bag = self.intersection_bag(id_camera)
-            
-            if len(result_intersection_human) > 0 or len(result_intersection_bag) > 0:
-
-                for rih in result_intersection_human:
-                    key = (rih[0][0], rih[0][1])
-                    if key not in self.unions_humans or rih[3] > self.unions_humans[key][3]:
-                        self.unions_humans[key] = rih
-
-                for rib in result_intersection_bag:
-                    key = (rib[0][0], rib[0][1])
-                    if key not in self.unions_bags or rib[3] > self.unions_bags[key][3]:
-                        self.unions_bags[key] = rib 
-                pass
+            with self.locker:
                 
-            array_pair = []
-            for i, bag1 in enumerate(self.bags):
-                if isinstance(bag1, Bag):
-                    bp = bag1.get_points(id_camera)
-                    if bp is not None:
-                        if len(bp) > 0:
-                            last_point_bag = bp[-1][1][0]
-                            original_ltwh_1 = bp[-1][1][1]
-                            if original_ltwh_1 is None:
-                                continue
-                            for j, human1 in enumerate(self.humans):
-                                if isinstance(human1, Human):
-                                    hp = human1.get_points(id_camera)
-                                    if hp is not None:
-                                        if len(hp) > 0:
-                                            last_point_human = hp[-1][1][0]
-                                            original_ltwh_2 = hp[-1][1][1]
-                                            if original_ltwh_2 is None:
-                                                continue
-                                            
-                                            (circle_pb_last_x, circle_pb_last_y), circle_pb_last_radius = box_to_circle(last_point_bag)
-                                            (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius = box_to_circle(last_point_human)
-                                            
-                                            """state_in = circle_intersection(
-                                                (circle_pb_last_x, circle_pb_last_y), 
-                                                (circle_ph_last_x, circle_ph_last_y), 
-                                                circle_pb_last_radius, 
-                                                circle_ph_last_radius    
-                                            )"""
-                                            
-                                            state_in = circle_intersection_area(circle_pb_last_radius, (circle_pb_last_x, circle_pb_last_y), circle_ph_last_radius, (circle_ph_last_x, circle_ph_last_y))
-                                            
-                                            if state_in[1] > 30:
-                                                state_in = 1
-                                            else:
-                                                state_in = 0    
+                for track in tracks:
+                    if not track.is_confirmed() or track.time_since_update > 1:
+                        continue
+                    bbox = track.to_ltrb()
+                    original_ltwh = track.original_ltwh
+                
+                    if track.det_class in self.human_ids:
+                        h = self.find_human(trackers_capacitor.get_uid_human(int(id_camera), int(track.track_id), int(track.det_class)) )
+                        if h is None:
+                            h = Human(
+                                human_id=trackers_capacitor.get_uid_human(int(id_camera), int(track.track_id), int(track.det_class)),
+                                det_class=track.det_class
+                                )
+                            h.append(id_camera, (bbox, original_ltwh))
+                            self.append_human(h)
+                        else:
+                            h.append(id_camera, (bbox, original_ltwh)) 
+                            
+                    elif track.det_class in self.bag_ids:
+                        b = self.find_bag(trackers_capacitor.get_uid_bag(int(id_camera), int(track.track_id), int(track.det_class)))
+                        if b is None:
+                            b = Bag(
+                                bag_id=trackers_capacitor.get_uid_bag(int(id_camera), int(track.track_id), int(track.det_class)),
+                                det_class=track.det_class
+                                )
+                            b.append(id_camera, (bbox, original_ltwh))
+                            self.append_bag(b)
+                        else:
+                            b.append(id_camera, (bbox, original_ltwh))
+                
+                
+                self.enable_track_camera_id(id_camera)
+                
+                result_intersection_human = self.intersection_human(id_camera)
+                
+                result_intersection_bag = self.intersection_bag(id_camera)
+                
+                if len(result_intersection_human) > 0 or len(result_intersection_bag) > 0:
+
+                    for rih in result_intersection_human:
+                        key = (rih[0][0], rih[0][1])
+                        if key not in self.unions_humans or rih[3] > self.unions_humans[key][3]:
+                            self.unions_humans[key] = rih
+
+                    for rib in result_intersection_bag:
+                        key = (rib[0][0], rib[0][1])
+                        if key not in self.unions_bags or rib[3] > self.unions_bags[key][3]:
+                            self.unions_bags[key] = rib 
+                    pass
+                    
+                array_pair = []
+                for i, bag1 in enumerate(self.bags):
+                    if isinstance(bag1, Bag):
+                        bp = bag1.get_points(id_camera)
+                        if bp != None:
+                            if len(bp) > 0:
+                                last_point_bag = bp[-1][1][0]
+                                original_ltwh_1 = bp[-1][1][1]
+                                if original_ltwh_1 is None:
+                                    continue
+                                for j, human1 in enumerate(self.humans):
+                                    if isinstance(human1, Human):
+                                        hp = human1.get_points(id_camera)
+                                        if hp != None:
+                                            if len(hp) > 0:
+                                                last_point_human = hp[-1][1][0]
+                                                original_ltwh_2 = hp[-1][1][1]
+                                                if original_ltwh_2 is None:
+                                                    continue
                                                 
-                                            center1 = (int(((last_point_bag[0]) + (last_point_bag[2]))/2), 
-                                                        int(((last_point_bag[1]) + (last_point_bag[3]))/2))
-                                            
-                                            center2 = (int(((last_point_human[0]) + (last_point_human[2]))/2), 
-                                                        int(((last_point_human[1]) + (last_point_human[3]))/2))
-                                            
-                                            len_pp = distance_between_points(center1, center2)
-                                            
-                                            
-                                            array_pair.append((
-                                                i, 
-                                                j, 
-                                                len_pp, 
-                                                last_point_bag, 
-                                                last_point_human, 
-                                                bag1.det_class, 
-                                                human1.det_class,
-                                                state_in,
-                                                bag1,
-                                                human1
-                                            ))
-                                    
-            
-            unique_data = {}
-            
-            for i_1, item_one in enumerate(array_pair):
-                item_bag = item_one[8]
-                item_human = item_one[9]
-                if isinstance(item_bag, Bag) and isinstance(item_human, Human):
-                    for i_2, item_two in enumerate(array_pair):
-                        if i_1 != i_2:
-                            item_bag_inline = item_two[8]
-                            item_human_inline = item_two[9]
-                            if isinstance(item_bag_inline, Bag) and isinstance(item_human_inline, Human):
-                                key = (item_bag.bag_id)
-                                if item_bag.bag_id == item_bag_inline.bag_id:
-                                    if key not in unique_data:
-                                        if item_one[2] < item_two[2]:
-                                            unique_data[key] = item_one
-                                        elif item_one[2] > item_two[2]:
-                                            unique_data[key] = item_two
-                                    else:
-                                        if item_one[2] < unique_data[key][2] and item_two[2] > unique_data[key][2]:
-                                            unique_data[key] = item_one
-                                        elif item_one[2] > unique_data[key][2] and item_two[2] < unique_data[key][2]:
-                                            unique_data[key] = item_two
-                                        
-            array_pair = list(unique_data.values())
-            
-            if len(array_pair) > 0:
-                pass
-            
-            unique_data = {}
+                                                (circle_pb_last_x, circle_pb_last_y), circle_pb_last_radius = box_to_circle(last_point_bag)
+                                                (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius = box_to_circle(last_point_human)
+                                                
+                                                """state_in = circle_intersection(
+                                                    (circle_pb_last_x, circle_pb_last_y), 
+                                                    (circle_ph_last_x, circle_ph_last_y), 
+                                                    circle_pb_last_radius, 
+                                                    circle_ph_last_radius    
+                                                )"""
+                                                
+                                                state_in = circle_intersection_area(circle_pb_last_radius, (circle_pb_last_x, circle_pb_last_y), circle_ph_last_radius, (circle_ph_last_x, circle_ph_last_y))
+                                                
+                                                if state_in[1] > push_tracks_state_in_circle_intersection_area:
+                                                    state_in = 1
+                                                else:
+                                                    state_in = 0    
+                                                    
+                                                center1 = (int(((last_point_bag[0]) + (last_point_bag[2]))/2), 
+                                                            int(((last_point_bag[1]) + (last_point_bag[3]))/2))
+                                                
+                                                center2 = (int(((last_point_human[0]) + (last_point_human[2]))/2), 
+                                                            int(((last_point_human[1]) + (last_point_human[3]))/2))
+                                                
+                                                len_pp = distance_between_points(center1, center2)
+                                                
+                                                
+                                                array_pair.append((
+                                                    i, 
+                                                    j, 
+                                                    len_pp, 
+                                                    last_point_bag, 
+                                                    last_point_human, 
+                                                    bag1.det_class, 
+                                                    human1.det_class,
+                                                    state_in,
+                                                    bag1,
+                                                    human1
+                                                ))
+                                        else:
+                                            pass
+                        else:
+                            pass          
                 
-            for item in array_pair:
-                item_bag = item[8]
-                item_human = item[9]
-                if isinstance(item_bag, Bag) and isinstance(item_human, Human):
-                    key = (item_bag.bag_id, item_human.human_id)
-                    if key not in unique_data or item[2] < unique_data[key][2]:
-                        unique_data[key] = item
-
-            array_pair = list(unique_data.values())
-            
-            
-            pair_on_other_cameras = self.find_pair_on_other_cameras(id_camera)
-            array_pair_hot = []
-            array_mod = []
-            limit_len = 3
-            for one_pair in array_pair:
-                if isinstance(one_pair[9], Human) and isinstance(one_pair[8], Bag):
-                    pone = self.find_pair(id_camera, one_pair[9].human_id, one_pair[8].bag_id)
-                    its_new_pair = False
-                    if pone is None:
-                        pone = Pair(id_camera, one_pair[9], one_pair[8])
-                        current_state, delta = pone.update(one_pair[7])
-                        self.append_pair(pone)
-                        its_new_pair = True
-                    else:
-                        current_state, delta = pone.update(one_pair[7])
-                    if pone.cold or pone.pre_cold:
-                        pone.cold = False
-                        pone.pre_cold = False
-                    array_pair_hot.append(pone)
-                    state_add = self.test_pone(
-                        current_state, 
-                        delta, 
-                        its_new_pair, 
-                        pone, 
-                        limit_len, 
-                        pair_on_other_cameras
-                    )
-                    
-                    if state_add is True:
-                        array_mod.append(pone)
-                        
-                    #print("f")
+                unique_data = {}
+                #пошук пар мінімальної відстані між сумкою і людиною
+                for i_1, item_one in enumerate(array_pair):
+                    item_bag = item_one[8]
+                    item_human = item_one[9]
+                    if isinstance(item_bag, Bag) and isinstance(item_human, Human):
+                        for i_2, item_two in enumerate(array_pair):
+                            if i_1 != i_2:
+                                item_bag_inline = item_two[8]
+                                item_human_inline = item_two[9]
+                                if isinstance(item_bag_inline, Bag) and isinstance(item_human_inline, Human):
+                                    key = (item_bag.bag_id)
+                                    if item_bag.bag_id == item_bag_inline.bag_id:
+                                        if key not in unique_data:
+                                            if item_one[2] < item_two[2]:
+                                                unique_data[key] = item_one
+                                            elif item_one[2] > item_two[2]:
+                                                unique_data[key] = item_two
+                                        else:
+                                            if item_one[2] < unique_data[key][2] and item_two[2] > unique_data[key][2]:
+                                                unique_data[key] = item_one
+                                            elif item_one[2] > unique_data[key][2] and item_two[2] < unique_data[key][2]:
+                                                unique_data[key] = item_two
+                                            
+                array_pair = list(unique_data.values())
+                
+                if len(array_pair) > 0:
                     pass
-            
-            
-            array_pair_pre = self.find_other_pairs_pre(id_camera, array_pair_hot)
-            
-            if len(array_pair_pre) > 0:
-                pass
-            
-            for pone in array_pair_pre:
-                if isinstance(pone, Pair):
-                    its_new_pair = False
+                
+                unique_data = {}
                     
-                    current_state, delta = pone.update(0)
-                    
-                    if delta is True and pone.pre_cold is True:
-                        pone.cold = True
-                    
-                    state_add = self.test_pone(current_state, delta, its_new_pair, pone, limit_len, pair_on_other_cameras)
-                    
-                    if state_add is True:
-                        array_mod.append(pone)
+                for item in array_pair:
+                    item_bag = item[8]
+                    item_human = item[9]
+                    if isinstance(item_bag, Bag) and isinstance(item_human, Human):
+                        key = (item_bag.bag_id, item_human.human_id)
+                        if key not in unique_data or item[2] < unique_data[key][2]:
+                            unique_data[key] = item
+
+                array_pair = list(unique_data.values())
+                
+                
+                #якщо пара є оновити інакше створити 
+                pair_on_other_cameras = self.find_pair_on_other_cameras(id_camera)
+                array_pair_hot = []
+                array_mod = []
+                limit_len = 3
+                for one_pair in array_pair:
+                    if isinstance(one_pair[9], Human) and isinstance(one_pair[8], Bag):
+                        pone = self.find_pair(id_camera, one_pair[9].human_id, one_pair[8].bag_id)
+                        its_new_pair = False
+                        if pone is None:
+                            pone = Pair(id_camera, one_pair[9], one_pair[8])
+                            current_state, delta = pone.update(one_pair[7])
+                            self.append_pair(pone)
+                            its_new_pair = True
+                        else:
+                            current_state, delta = pone.update(one_pair[7])
+                        """if pone.cold or pone.pre_cold:
+                            pone.cold = False
+                            pone.pre_cold = False"""
+                        array_pair_hot.append(pone)
+                        state_add = self.test_pone(
+                            current_state, 
+                            delta, 
+                            its_new_pair, 
+                            pone, 
+                            limit_len, 
+                            pair_on_other_cameras
+                        )
                         
-                    #print("f")
-                    pass
-            
-            
-            if len(array_mod) > 0:
-                for one_elem in array_mod:
-                    if isinstance(one_elem, Pair):
-                        if isinstance(one_elem.bag, Bag) and isinstance(one_elem.human, Human):
-                            pass
-                            #print(f"{one_elem.bag.bag_id} {one_elem.human.human_id}")
+                        if state_add is True:
+                            array_mod.append(pone)
+                            
+                        #print("f")
+                        pass
+                
+                
+                array_pair_pre = self.find_other_pairs_pre(id_camera, array_pair_hot)
+                
                 pass
-            
-            
-            for one_intersect in result_intersection_human:
-                curr_key = one_intersect[0]
-                if len(self.human_groups) > 0:
-                    index_exist_1 = None
-                    index_exist_2 = None
-                    for i_elem, one_elem_gb in enumerate(self.human_groups):
-                        keys = [one_human.human_id for one_human in one_elem_gb if isinstance(one_human, Human)]
-                        if curr_key[0] not in keys and curr_key[1] in keys:
-                            index_exist_2 = i_elem
-                            self.human_groups[i_elem].append(one_intersect[5][0])
-                        elif curr_key[0] in keys and curr_key[1] not in keys:
-                            index_exist_1 = i_elem
-                            self.human_groups[i_elem].append(one_intersect[5][1])
-                        elif curr_key[0] not in keys and curr_key[1] not in keys:
-                            pass
-                    if index_exist_1 is None and index_exist_2 is None:
-                        self.human_groups.append([one_intersect[5][0], one_intersect[5][1]])
-                else:
-                    self.human_groups.append([one_intersect[5][0], one_intersect[5][1]])
-            
-            
-            for one_intersect in result_intersection_bag:
-                curr_key = one_intersect[0]    
-                if len(self.bags_groups) > 0:
-                    index_exist_1 = None
-                    index_exist_2 = None
-                    for i_elem, one_elem_gb in enumerate(self.bags_groups):
-                        keys = [one_bag.bag_id for one_bag in one_elem_gb if isinstance(one_bag, Bag)]
-                        if curr_key[0] not in keys and curr_key[1] in keys:
-                            index_exist_2 = i_elem
-                            self.bags_groups[i_elem].append(one_intersect[5][0])
-                        elif curr_key[0] in keys and curr_key[1] not in keys:
-                            index_exist_1 = i_elem
-                            self.bags_groups[i_elem].append(one_intersect[5][1])
-                        elif curr_key[0] not in keys and curr_key[1] not in keys:
-                            pass 
-                    if index_exist_1 is None and index_exist_2 is None:
-                        self.bags_groups.append([one_intersect[5][0], one_intersect[5][1]])
-                else:
-                    self.bags_groups.append([one_intersect[5][0], one_intersect[5][1]])
-
-
-            for one_human_glob in self.humans:
-                if isinstance(one_human_glob, Human):
-                    curr_key = one_human_glob.human_id
-                    is_exist = False
+                
+                if len(array_pair_pre) > 0:
+                    pass
+                
+                for pone in array_pair_pre:
+                    if isinstance(pone, Pair):
+                        its_new_pair = False
+                        
+                        current_state, delta = pone.update(0)
+                        
+                        if delta is True and pone.pre_cold is True:
+                            pone.cold = True
+                        
+                        state_add = self.test_pone(current_state, delta, its_new_pair, pone, limit_len, pair_on_other_cameras)
+                        
+                        if state_add is True:
+                            array_mod.append(pone)
+                            
+                        #print("f")
+                        pass
+                
+                pass
+                
+                if len(array_mod) > 0:
+                    for one_elem in array_mod:
+                        if isinstance(one_elem, Pair):
+                            if isinstance(one_elem.bag, Bag) and isinstance(one_elem.human, Human):
+                                pass
+                                #print(f"{one_elem.bag.bag_id} {one_elem.human.human_id}")
+                    pass
+                
+                pass
+                
+                for one_intersect in result_intersection_human:
+                    curr_key = one_intersect[0]
                     if len(self.human_groups) > 0:
+                        index_exist_1 = None
+                        index_exist_2 = None
                         for i_elem, one_elem_gb in enumerate(self.human_groups):
                             keys = [one_human.human_id for one_human in one_elem_gb if isinstance(one_human, Human)]
-                            if curr_key in keys:
-                                is_exist = True 
-                                break
-                    if is_exist is False:
-                        self.human_groups.append([one_human_glob])
+                            if curr_key[0] not in keys and curr_key[1] in keys:
+                                index_exist_2 = i_elem
+                                self.human_groups[i_elem].append(one_intersect[5][0])
+                            elif curr_key[0] in keys and curr_key[1] not in keys:
+                                index_exist_1 = i_elem
+                                self.human_groups[i_elem].append(one_intersect[5][1])
+                            elif curr_key[0] not in keys and curr_key[1] not in keys:
+                                pass
+                        if index_exist_1 is None and index_exist_2 is None:
+                            self.human_groups.append([one_intersect[5][0], one_intersect[5][1]])
+                    else:
+                        self.human_groups.append([one_intersect[5][0], one_intersect[5][1]])
                 
-            
-            for one_bag_glob in self.bags:
-                if isinstance(one_bag_glob, Bag):
-                    curr_key = one_bag_glob.bag_id  
-                    is_exist = False 
+                pass
+                
+                for one_intersect in result_intersection_bag:
+                    curr_key = one_intersect[0]    
                     if len(self.bags_groups) > 0:
+                        index_exist_1 = None
+                        index_exist_2 = None
                         for i_elem, one_elem_gb in enumerate(self.bags_groups):
                             keys = [one_bag.bag_id for one_bag in one_elem_gb if isinstance(one_bag, Bag)]
-                            if curr_key in keys:
-                                is_exist = True 
-                                break
-                    if is_exist is False:
-                        self.bags_groups.append([one_bag_glob])
-            
-            for one_group in self.human_groups:
-                if len(self.human_groups) > 1:
-                    pass
+                            if curr_key[0] not in keys and curr_key[1] in keys:
+                                index_exist_2 = i_elem
+                                self.bags_groups[i_elem].append(one_intersect[5][0])
+                            elif curr_key[0] in keys and curr_key[1] not in keys:
+                                index_exist_1 = i_elem
+                                self.bags_groups[i_elem].append(one_intersect[5][1])
+                            elif curr_key[0] not in keys and curr_key[1] not in keys:
+                                pass 
+                        if index_exist_1 is None and index_exist_2 is None:
+                            self.bags_groups.append([one_intersect[5][0], one_intersect[5][1]])
+                    else:
+                        self.bags_groups.append([one_intersect[5][0], one_intersect[5][1]])
+
+                pass
+
+                for one_human_glob in self.humans:
+                    if isinstance(one_human_glob, Human):
+                        curr_key = one_human_glob.human_id
+                        is_exist = False
+                        if len(self.human_groups) > 0:
+                            for i_elem, one_elem_gb in enumerate(self.human_groups):
+                                keys = [one_human.human_id for one_human in one_elem_gb if isinstance(one_human, Human)]
+                                if curr_key in keys:
+                                    is_exist = True 
+                                    break
+                        if is_exist is False:
+                            self.human_groups.append([one_human_glob])
                 
-                finded_entity = None
-                for single_entity in self.entities:
-                    if isinstance(single_entity, Entity):
-                        break_is = False
+                pass    
+                
+                for one_bag_glob in self.bags:
+                    if isinstance(one_bag_glob, Bag):
+                        curr_key = one_bag_glob.bag_id  
+                        is_exist = False 
+                        if len(self.bags_groups) > 0:
+                            for i_elem, one_elem_gb in enumerate(self.bags_groups):
+                                keys = [one_bag.bag_id for one_bag in one_elem_gb if isinstance(one_bag, Bag)]
+                                if curr_key in keys:
+                                    is_exist = True 
+                                    break
+                        if is_exist is False:
+                            self.bags_groups.append([one_bag_glob])
+                
+                pass
+                
+                for one_group in self.human_groups:
+                    if len(self.human_groups) > 1:
+                        pass
+                    
+                    finded_entity = None
+                    for single_entity in self.entities:
+                        if isinstance(single_entity, Entity):
+                            break_is = False
+                            for one_elem_group in one_group:
+                                if isinstance(one_elem_group, Human):
+                                    if single_entity.exist_human_id(one_elem_group.human_id):
+                                        finded_entity = single_entity
+                                        break_is = True
+                            if break_is is True:
+                                break
+                    
+                    if finded_entity is None:
+                        entity = Entity()  
+                        self.entities.append(entity)
+                        finded_entity = entity
+                        
+                    if finded_entity is not None and isinstance(finded_entity, Entity):
                         for one_elem_group in one_group:
                             if isinstance(one_elem_group, Human):
-                                if single_entity.exist_human_id(one_elem_group.human_id):
-                                    finded_entity = single_entity
-                                    break_is = True
-                        if break_is is True:
-                            break
+                                if finded_entity.exist_human_id(one_elem_group.human_id) is False:
+                                    finded_entity.push_human(one_elem_group)
+
+                pass
                 
-                if finded_entity is None:
-                    entity = Entity()  
-                    self.entities.append(entity)
-                    finded_entity = entity
-                    
-                if finded_entity is not None and isinstance(finded_entity, Entity):
-                    for one_elem_group in one_group:
-                        if isinstance(one_elem_group, Human):
-                            if finded_entity.exist_human_id(one_elem_group.human_id) is False:
-                                finded_entity.push_human(one_elem_group)
-                
-            for one_pair in array_mod:
-                if isinstance(one_pair, Pair):
-                    if isinstance(one_pair.bag, Bag) and isinstance(one_pair.human, Human): 
-                            
-                        for single_entity in self.entities:
-                            if isinstance(single_entity, Entity):
-                                if single_entity.exist_human_id(one_pair.human.human_id):
-                                    
-                                    bag_group = []
-                                    if len(self.bags_groups) > 0:
-                                        curr_key = one_pair.bag.bag_id
-                                        for i_elem, one_elem_gb in enumerate(self.bags_groups):
-                                            keys = [one_bag.bag_id for one_bag in one_elem_gb if isinstance(one_bag, Bag)]
-                                            if curr_key in keys:
-                                                bag_group = one_elem_gb
-                                                break
-                                    
-                                    single_entity.push_pair(one_pair)
-                                    
-                                    single_entity.push_bag(one_pair.bag)
-                                    
-                                    single_entity.push_bag_group(bag_group, id_camera)
-                                    
-                                    break
-                            
-        pass
-                        
-        if len(self.entities) > 0:
+                for one_pair in array_mod:
+                    if isinstance(one_pair, Pair):
+                        if isinstance(one_pair.bag, Bag) and isinstance(one_pair.human, Human): 
+                                
+                            for single_entity in self.entities:
+                                if isinstance(single_entity, Entity):
+                                    if single_entity.exist_human_id(one_pair.human.human_id):
+                                        
+                                        bag_group = []
+                                        if len(self.bags_groups) > 0:
+                                            curr_key = one_pair.bag.bag_id
+                                            for i_elem, one_elem_gb in enumerate(self.bags_groups):
+                                                keys = [one_bag.bag_id for one_bag in one_elem_gb if isinstance(one_bag, Bag)]
+                                                if curr_key in keys:
+                                                    bag_group = one_elem_gb
+                                                    break
+                                        
+                                        single_entity.push_pair(one_pair)
+                                        
+                                        single_entity.push_bag(one_pair.bag)
+                                        
+                                        single_entity.push_bag_group(bag_group, id_camera)
+                                        
+                                        break
+                                
             pass
-        if len(self.entities) > 1:
-            pass
-        #print("f")
+                            
+            if len(self.entities) > 0:
+                pass
+            if len(self.entities) > 1:
+                pass
+            #print("f")
         return self.entities
             
         
