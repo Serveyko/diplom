@@ -1666,8 +1666,6 @@ class PairsManager:
                         else:
                             pass          
                 
-                print(array_pair)
-                
                 unique_data = {}
                 #пошук пар мінімальної відстані між сумкою і людиною
                 for i_1, item_one in enumerate(array_pair):
@@ -1693,8 +1691,6 @@ class PairsManager:
                                                 unique_data[key] = item_two
                                             
                 array_pair = list(unique_data.values())
-                
-                print(array_pair)
                 
                 if len(array_pair) > 0:
                     pass
