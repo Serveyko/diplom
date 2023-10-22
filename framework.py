@@ -587,12 +587,15 @@ class Pair:
             self.intersection_array.clear()
             self.state_array.clear()
             self.pair_state.clear()
-            self.intersection_array.append(1)
-            self.state_array.append(1)
+            limit_len = push_tracks_test_pone_limit_len
+            for elem_i in range(limit_len):
+                self.intersection_array.append(1)
+                self.state_array.append(1)
             
             before_state = self.current_state
             self.current_state = True
-            self.pair_state.append(self.current_state)
+            for elem_i in range(limit_len):
+                self.pair_state.append(self.current_state)
         else:
             if st == 1:
                 self.intersection_array.append(1)
