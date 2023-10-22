@@ -279,7 +279,7 @@ def get_min_len_human_baggage(points, unions, dict_indexs):
     
     return r2
 
-def intersection(points, dict_indexs, kad_a=intersection_kad_a, percent_area=intersection_percent_area):
+"""def intersection(points, dict_indexs, kad_a=intersection_kad_a, percent_area=intersection_percent_area):
     
     points_result = []
     for pt in points:
@@ -310,7 +310,7 @@ def intersection(points, dict_indexs, kad_a=intersection_kad_a, percent_area=int
         pass
     
     return points_result, union
-
+"""
 def circle_intersection_area(radius1, center1, radius2, center2):
     d = math.sqrt((center1[0] - center2[0]) ** 2 + (center1[1] - center2[1]) ** 2)
 
@@ -576,8 +576,12 @@ class Pair:
     def update(self, st, reset_original=False):
         before_state = False
         if reset_original is True:
+            self.intersection_array.clear()
+            self.state_array.clear()
+            self.pair_state.clear()
             self.intersection_array.append(1)
             self.state_array.append(1)
+            
             before_state = self.current_state
             self.current_state = True
             self.pair_state.append(self.current_state)
