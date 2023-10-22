@@ -64,7 +64,7 @@ timer_merge_by_face_timestep = 1000
 
 
 push_tracks_state_in_circle_intersection_area = 20
-
+push_tracks_test_pone_limit_len = 1
 """param_yolov8_detect_model_path = Parameter(name='yolov8_detect_model_path', original_value=r"D:\MY_WORKS\FindHumans\yolov8n.pt")
     param_main_process_count_frames = Parameter(name='main_process_count_frames', original_value=1)
     param_main_process_timer_timestep = Parameter(name='main_process_timer_timestep', original_value=300)
@@ -154,6 +154,7 @@ def load_all_config():
     global timer_human_update_update_interval
     global timer_merge_by_face_timestep
     global push_tracks_state_in_circle_intersection_area
+    global push_tracks_test_pone_limit_len
     
     loaded_params = start_load_save_params(session, params_dict)
 
@@ -234,6 +235,8 @@ def load_all_config():
                 pass
             elif name == 'push_tracks_state_in_circle_intersection_area':
                 push_tracks_state_in_circle_intersection_area = sparam.current_value
+            elif name == 'push_tracks_test_pone_limit_len':
+                push_tracks_test_pone_limit_len = sparam.current_value
 
 load_all_config()
 

@@ -11,6 +11,7 @@ from config import pair_threshold_one, pair_threshold_two, entity_max_len_deque_
 from config import pairs_manager_max_len_deque_points_id, entity_after_reconfig_bag_group_percent_area
 from config import intersection_percent_area, intersection_kad_a, pairs_manager_intersection_human_percent_area
 from config import pairs_manager_intersection_bag_percent_area, push_tracks_state_in_circle_intersection_area
+from config import push_tracks_test_pone_limit_len
 
 from PyQt5.QtCore import QMutex
 
@@ -84,6 +85,13 @@ def ltrb_to_ltwh(ltrb):
     height = bottom - top
     ltwh = [left, top, width, height]
     return ltwh
+
+def ltwh_to_ltrb(ltwh):
+    left, top, width, height = ltwh[0], ltwh[1], ltwh[2], ltwh[3]
+    right = left + width
+    bottom = top + height
+    ltrb = [left, top, right, bottom]
+    return ltrb
 
 def calculate_intersection_area_ltwh(ltwh1, ltwh2):
     left1, top1, width1, height1 = ltwh1[0], ltwh1[1], ltwh1[2], ltwh1[3]
@@ -1481,7 +1489,7 @@ class PairsManager:
                     if pone.id_camera == id_current_camera:# and not pone.cold:
                         # Перевіряємо, чи ID пари є в current_pairs_ids
                         if pone.current_id not in current_pairs_ids:
-                            pone.pre_cold = True
+                            #pone.pre_cold = True
                             result_pairs.append(pone)
         return result_pairs
 
@@ -1538,7 +1546,7 @@ class PairsManager:
             with self.locker:
                 
                 for track in tracks:
-                    if not track.is_confirmed() or track.time_since_update > 1:
+                    if track.is_confirmed() is False or track.time_since_update > 1:
                         continue
                     bbox = track.to_ltrb()
                     original_ltwh = track.original_ltwh
@@ -1608,6 +1616,7 @@ class PairsManager:
                                                 if original_ltwh_2 is None:
                                                     continue
                                                 
+                                                                                                
                                                 (circle_pb_last_x, circle_pb_last_y), circle_pb_last_radius = box_to_circle(last_point_bag)
                                                 (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius = box_to_circle(last_point_human)
                                                 
@@ -1618,7 +1627,12 @@ class PairsManager:
                                                     circle_ph_last_radius    
                                                 )"""
                                                 
-                                                state_in = circle_intersection_area(circle_pb_last_radius, (circle_pb_last_x, circle_pb_last_y), circle_ph_last_radius, (circle_ph_last_x, circle_ph_last_y))
+                                                state_in = circle_intersection_area(
+                                                    circle_pb_last_radius, 
+                                                    (circle_pb_last_x, circle_pb_last_y), 
+                                                    circle_ph_last_radius, 
+                                                    (circle_ph_last_x, circle_ph_last_y)
+                                                )
                                                 
                                                 if state_in[1] > push_tracks_state_in_circle_intersection_area:
                                                     state_in = 1
@@ -1652,6 +1666,8 @@ class PairsManager:
                         else:
                             pass          
                 
+                print(array_pair)
+                
                 unique_data = {}
                 #пошук пар мінімальної відстані між сумкою і людиною
                 for i_1, item_one in enumerate(array_pair):
@@ -1659,24 +1675,26 @@ class PairsManager:
                     item_human = item_one[9]
                     if isinstance(item_bag, Bag) and isinstance(item_human, Human):
                         for i_2, item_two in enumerate(array_pair):
-                            if i_1 != i_2:
+                            #if i_1 != i_2:
                                 item_bag_inline = item_two[8]
                                 item_human_inline = item_two[9]
                                 if isinstance(item_bag_inline, Bag) and isinstance(item_human_inline, Human):
                                     key = (item_bag.bag_id)
                                     if item_bag.bag_id == item_bag_inline.bag_id:
                                         if key not in unique_data:
-                                            if item_one[2] < item_two[2]:
+                                            if item_one[2] <= item_two[2]:
                                                 unique_data[key] = item_one
-                                            elif item_one[2] > item_two[2]:
+                                            elif item_one[2] >= item_two[2]:
                                                 unique_data[key] = item_two
                                         else:
-                                            if item_one[2] < unique_data[key][2] and item_two[2] > unique_data[key][2]:
+                                            if item_one[2] <= unique_data[key][2] and item_two[2] > unique_data[key][2]:
                                                 unique_data[key] = item_one
-                                            elif item_one[2] > unique_data[key][2] and item_two[2] < unique_data[key][2]:
+                                            elif item_one[2] >= unique_data[key][2] and item_two[2] < unique_data[key][2]:
                                                 unique_data[key] = item_two
                                             
                 array_pair = list(unique_data.values())
+                
+                print(array_pair)
                 
                 if len(array_pair) > 0:
                     pass
@@ -1698,7 +1716,7 @@ class PairsManager:
                 pair_on_other_cameras = self.find_pair_on_other_cameras(id_camera)
                 array_pair_hot = []
                 array_mod = []
-                limit_len = 3
+                limit_len = push_tracks_test_pone_limit_len
                 for one_pair in array_pair:
                     if isinstance(one_pair[9], Human) and isinstance(one_pair[8], Bag):
                         pone = self.find_pair(id_camera, one_pair[9].human_id, one_pair[8].bag_id)
@@ -1743,8 +1761,8 @@ class PairsManager:
                         
                         current_state, delta = pone.update(0)
                         
-                        if delta is True and pone.pre_cold is True:
-                            pone.cold = True
+                        """if delta is True and pone.pre_cold is True:
+                            pone.cold = True"""
                         
                         state_add = self.test_pone(current_state, delta, its_new_pair, pone, limit_len, pair_on_other_cameras)
                         
