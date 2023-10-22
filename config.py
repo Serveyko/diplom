@@ -153,7 +153,8 @@ def load_all_config():
     global timer_log_update_update_interval
     global timer_human_update_update_interval
     global timer_merge_by_face_timestep
-
+    global push_tracks_state_in_circle_intersection_area
+    
     loaded_params = start_load_save_params(session, params_dict)
 
     for sparam in loaded_params:
@@ -231,6 +232,8 @@ def load_all_config():
             elif name == 'timer_merge_by_face_timestep':
                 timer_merge_by_face_timestep = sparam.current_value
                 pass
+            elif name == 'push_tracks_state_in_circle_intersection_area':
+                push_tracks_state_in_circle_intersection_area = sparam.current_value
 
 load_all_config()
 

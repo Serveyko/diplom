@@ -573,42 +573,50 @@ class Pair:
     def get_len(self):
         return len(self.intersection_array)
     
-    def update(self, st):
-        if st == 1:
+    def update(self, st, reset_original=False):
+        before_state = False
+        if reset_original is True:
             self.intersection_array.append(1)
+            self.state_array.append(1)
+            before_state = self.current_state
+            self.current_state = True
+            self.pair_state.append(self.current_state)
         else:
-            self.intersection_array.append(0) 
-        larr = None
-        if len(self.intersection_array) > 0:
-            larr = list(self.intersection_array)
-            larr = exponential_moving_average(larr, self.magic_one)
-        
-        if larr is not None:
-            if larr[-1] > self.threshold_one:
-                self.state_array.append(1)
+            if st == 1:
+                self.intersection_array.append(1)
+            else:
+                self.intersection_array.append(0) 
+            larr = None
+            if len(self.intersection_array) > 0:
+                larr = list(self.intersection_array)
+                larr = exponential_moving_average(larr, self.magic_one)
+            
+            if larr is not None:
+                if larr[-1] > self.threshold_one:
+                    self.state_array.append(1)
+                else:
+                    self.state_array.append(0)
             else:
                 self.state_array.append(0)
-        else:
-            self.state_array.append(0)
 
-        before_state = self.current_state
-            
-        if len(self.state_array) > 0:
-            cr = list(self.state_array)
-            cr = exponential_moving_average(cr, self.magic_two)
-            
-            if cr[-1] > self.threshold_two:
-                #true green
-                self.current_state = True
+            before_state = self.current_state
+                
+            if len(self.state_array) > 0:
+                cr = list(self.state_array)
+                cr = exponential_moving_average(cr, self.magic_two)
+                
+                if cr[-1] > self.threshold_two:
+                    #true green
+                    self.current_state = True
+                else:
+                    #false red
+                    self.current_state = False
             else:
-                #false red
-                self.current_state = False
-        else:
-            #none white
-            self.current_state = None
+                #none white
+                self.current_state = None
+                
+            self.pair_state.append(self.current_state)
             
-        self.pair_state.append(self.current_state)
-        
         self.last_time_update = time.time()
         
         return self.current_state, before_state != self.current_state 
@@ -1620,7 +1628,7 @@ class PairsManager:
                                                 
                                                 len_pp = distance_between_points(center1, center2)
                                                 
-                                                
+                                                state_original = True 
                                                 array_pair.append((
                                                     i, 
                                                     j, 
@@ -1631,7 +1639,8 @@ class PairsManager:
                                                     human1.det_class,
                                                     state_in,
                                                     bag1,
-                                                    human1
+                                                    human1,
+                                                    state_original
                                                 ))
                                         else:
                                             pass
@@ -1691,11 +1700,11 @@ class PairsManager:
                         its_new_pair = False
                         if pone is None:
                             pone = Pair(id_camera, one_pair[9], one_pair[8])
-                            current_state, delta = pone.update(one_pair[7])
+                            current_state, delta = pone.update(one_pair[7], one_pair[10])
                             self.append_pair(pone)
                             its_new_pair = True
                         else:
-                            current_state, delta = pone.update(one_pair[7])
+                            current_state, delta = pone.update(one_pair[7], one_pair[10])
                         """if pone.cold or pone.pre_cold:
                             pone.cold = False
                             pone.pre_cold = False"""

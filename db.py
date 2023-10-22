@@ -98,7 +98,8 @@ params_dict = {
     'intersection_kad_a': 1,
     'timer_log_update_update_interval': 1000,
     'timer_human_update_update_interval': 1000,
-    'timer_merge_by_face_timestep': 1000
+    'timer_merge_by_face_timestep': 1000,
+    'push_tracks_state_in_circle_intersection_area': 30
 }
 
 def save_one_params_settings(session, param_name, original_value, current_value):
