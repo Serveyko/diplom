@@ -1651,19 +1651,20 @@ class PairsManager:
                                                 len_pp = distance_between_points(center1, center2)
                                                 
                                                 state_original = True 
-                                                array_pair.append((
-                                                    i, 
-                                                    j, 
-                                                    len_pp, 
-                                                    last_point_bag, 
-                                                    last_point_human, 
-                                                    bag1.det_class, 
-                                                    human1.det_class,
-                                                    state_in,
-                                                    bag1,
-                                                    human1,
-                                                    state_original
-                                                ))
+                                                if state_in is True or state_in == 1:
+                                                    array_pair.append((
+                                                        i, 
+                                                        j, 
+                                                        len_pp, 
+                                                        last_point_bag, 
+                                                        last_point_human, 
+                                                        bag1.det_class, 
+                                                        human1.det_class,
+                                                        state_in,
+                                                        bag1,
+                                                        human1,
+                                                        state_original
+                                                    ))
                                         else:
                                             pass
                         else:
@@ -1683,15 +1684,19 @@ class PairsManager:
                                     key = (item_bag.bag_id)
                                     if item_bag.bag_id == item_bag_inline.bag_id:
                                         if key not in unique_data:
-                                            if item_one[2] <= item_two[2]:
+                                            if item_one[2] < item_two[2]:
                                                 unique_data[key] = item_one
-                                            elif item_one[2] >= item_two[2]:
+                                            elif item_one[2] > item_two[2]:
                                                 unique_data[key] = item_two
+                                            elif item_one[2] == item_two[2]:
+                                                unique_data[key] = item_one
+                              
                                         else:
-                                            if item_one[2] <= unique_data[key][2] and item_two[2] > unique_data[key][2]:
+                                            if item_one[2] < unique_data[key][2] and unique_data[key][2] < item_two[2]:
                                                 unique_data[key] = item_one
-                                            elif item_one[2] >= unique_data[key][2] and item_two[2] < unique_data[key][2]:
+                                            elif item_one[2] > unique_data[key][2] and unique_data[key][2] > item_two[2]:
                                                 unique_data[key] = item_two
+                                          
                                             
                 array_pair = list(unique_data.values())
                 
@@ -1720,28 +1725,30 @@ class PairsManager:
                     if isinstance(one_pair[9], Human) and isinstance(one_pair[8], Bag):
                         pone = self.find_pair(id_camera, one_pair[9].human_id, one_pair[8].bag_id)
                         its_new_pair = False
-                        if pone is None:
+                        current_state = None
+                        if pone is None:#остання перевірка на те чи є перетин щоб не формувати попусту пари без перетинів
                             pone = Pair(id_camera, one_pair[9], one_pair[8])
                             current_state, delta = pone.update(one_pair[7], one_pair[10])
                             self.append_pair(pone)
                             its_new_pair = True
-                        else:
+                        elif pone is not None:
                             current_state, delta = pone.update(one_pair[7], one_pair[10])
                         """if pone.cold or pone.pre_cold:
                             pone.cold = False
                             pone.pre_cold = False"""
-                        array_pair_hot.append(pone)
-                        state_add = self.test_pone(
-                            current_state, 
-                            delta, 
-                            its_new_pair, 
-                            pone, 
-                            limit_len, 
-                            pair_on_other_cameras
-                        )
-                        
-                        if state_add is True:
-                            array_mod.append(pone)
+                        if current_state is not None:
+                            array_pair_hot.append(pone)
+                            state_add = self.test_pone(
+                                current_state, 
+                                delta, 
+                                its_new_pair, 
+                                pone, 
+                                limit_len, 
+                                pair_on_other_cameras
+                            )
+                            
+                            if state_add is True:
+                                array_mod.append(pone)
                             
                         #print("f")
                         pass

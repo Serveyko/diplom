@@ -110,6 +110,12 @@ def find(
                     color = [255, 0, 0]
                 
                 if bbox is not None: #and original_ltwh is not None
+                    
+                    (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius = box_to_circle(bbox)
+                    
+                    thickness = 2
+                    cv2.circle(plot_frame, (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius, color, thickness)
+                    
                     cv2.rectangle(
                         plot_frame, 
                         (int(bbox[0]),int(bbox[1])), 

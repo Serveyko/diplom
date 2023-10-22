@@ -49,7 +49,7 @@ entity_after_reconfig_bag_group_percent_area = 20
 
 
 pairs_manager_max_len_deque_points_id = 300
-pairs_manager_intersection_human_percent_area = 10
+pairs_manager_intersection_human_percent_area = 30
 pairs_manager_intersection_bag_percent_area = 30
 
 
@@ -63,7 +63,7 @@ timer_merge_by_face_timestep = 1000
 
 
 
-push_tracks_state_in_circle_intersection_area = 20
+push_tracks_state_in_circle_intersection_area = 30
 push_tracks_test_pone_limit_len = 1
 """param_yolov8_detect_model_path = Parameter(name='yolov8_detect_model_path', original_value=r"D:\MY_WORKS\FindHumans\yolov8n.pt")
     param_main_process_count_frames = Parameter(name='main_process_count_frames', original_value=1)
