@@ -1570,6 +1570,7 @@ class PairsManager:
                 
                 result_intersection_bag = self.intersection_bag(id_camera)
                 
+                #щоб дублі видалити
                 if len(result_intersection_human) > 0 or len(result_intersection_bag) > 0:
 
                     for rih in result_intersection_human:
