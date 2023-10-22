@@ -100,7 +100,10 @@ params_dict = {
     'timer_human_update_update_interval': 1000,
     'timer_merge_by_face_timestep': 1000,
     'push_tracks_state_in_circle_intersection_area': 30,
-    'push_tracks_test_pone_limit_len': 1
+    'push_tracks_test_pone_limit_len': 1,
+    'push_tracks_delta_time_limit': 1.0,
+    'intersection_human_delta_time_limit': 1.0,
+    'intersection_bag_delta_time_limit': 1.0
 }
 
 def save_one_params_settings(session, param_name, original_value, current_value):

@@ -65,6 +65,12 @@ timer_merge_by_face_timestep = 1000
 
 push_tracks_state_in_circle_intersection_area = 30
 push_tracks_test_pone_limit_len = 1
+push_tracks_delta_time_limit = 1
+
+
+intersection_human_delta_time_limit = 1.0
+intersection_bag_delta_time_limit = 1.0
+
 """param_yolov8_detect_model_path = Parameter(name='yolov8_detect_model_path', original_value=r"D:\MY_WORKS\FindHumans\yolov8n.pt")
     param_main_process_count_frames = Parameter(name='main_process_count_frames', original_value=1)
     param_main_process_timer_timestep = Parameter(name='main_process_timer_timestep', original_value=300)
@@ -155,6 +161,9 @@ def load_all_config():
     global timer_merge_by_face_timestep
     global push_tracks_state_in_circle_intersection_area
     global push_tracks_test_pone_limit_len
+    global push_tracks_delta_time_limit
+    global intersection_human_delta_time_limit
+    global intersection_bag_delta_time_limit
     
     loaded_params = start_load_save_params(session, params_dict)
 
@@ -235,8 +244,20 @@ def load_all_config():
                 pass
             elif name == 'push_tracks_state_in_circle_intersection_area':
                 push_tracks_state_in_circle_intersection_area = sparam.current_value
+                pass
             elif name == 'push_tracks_test_pone_limit_len':
                 push_tracks_test_pone_limit_len = sparam.current_value
+                pass
+            elif name == 'push_tracks_delta_time_limit':
+                push_tracks_delta_time_limit = sparam.current_value
+                pass
+            elif name == 'intersection_human_delta_time_limit':
+                intersection_human_delta_time_limit = sparam.current_value
+                pass
+            elif name == 'intersection_bag_delta_time_limit':
+                intersection_bag_delta_time_limit = sparam.current_value
+                pass
+                
 
 load_all_config()
 

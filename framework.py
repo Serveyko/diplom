@@ -11,7 +11,8 @@ from config import pair_threshold_one, pair_threshold_two, entity_max_len_deque_
 from config import pairs_manager_max_len_deque_points_id, entity_after_reconfig_bag_group_percent_area
 from config import intersection_percent_area, intersection_kad_a, pairs_manager_intersection_human_percent_area
 from config import pairs_manager_intersection_bag_percent_area, push_tracks_state_in_circle_intersection_area
-from config import push_tracks_test_pone_limit_len
+from config import push_tracks_test_pone_limit_len, push_tracks_delta_time_limit
+from config import intersection_human_delta_time_limit, intersection_bag_delta_time_limit
 
 from PyQt5.QtCore import QMutex
 
@@ -340,6 +341,39 @@ def circle_intersection_area(radius1, center1, radius2, center2):
         total_area = math.pi * radius1 ** 2 + math.pi * radius2 ** 2
         percentage_intersection = (intersection_area / total_area) * 100
         return intersection_area, percentage_intersection
+
+def circle_bbox_intersection_area_percentage(circle_radius, circle_center, ltrb_bbox):
+    circle_x, circle_y = circle_center
+    left, top, right, bottom = ltrb_bbox
+
+    # Обчислення центру обмежуючого прямокутника (bbox)
+    bbox_center = ((left + right) / 2, (top + bottom) / 2)
+
+    # Обчислення відстані між центрами кола і bbox
+    dx = abs(circle_x - bbox_center[0]) - (right - left) / 2
+    dy = abs(circle_y - bbox_center[1]) - (bottom - top) / 2
+
+    # Перевірка, чи коло і bbox перетинаються
+    if dx <= circle_radius and dy <= circle_radius:
+        if dx < 0:
+            dx = 0
+        if dy < 0:
+            dy = 0
+
+        # Обчислення площі перетину (за допомогою сектора кола і обмежуючого прямокутника)
+        intersection_area = (dx * (bottom - top) / 2 + dy * (right - left) / 2 +
+                             (circle_radius ** 2 * math.acos(dx / circle_radius) -
+                              dx * math.sqrt(circle_radius ** 2 - dx ** 2)) / 2)
+
+        # Обчислення площі кола
+        circle_area = math.pi * circle_radius ** 2
+
+        # Обчислення площі перетину у відсотках
+        intersection_percentage = (intersection_area / circle_area) * 100
+
+        return intersection_percentage
+    else:
+        return 0
 
 class QMutexContextManager:
     def __init__(self):
@@ -1354,7 +1388,7 @@ class PairsManager:
             if isinstance(bone, Bag):
                 bone.enable_one_camera(id_camera)
     
-    def intersection_human(self, id_camera=-1, percent_area = pairs_manager_intersection_human_percent_area, delta_time_limit=None):
+    def intersection_human(self, id_camera=-1, percent_area = pairs_manager_intersection_human_percent_area, delta_time_limit=intersection_human_delta_time_limit):
         result_intersection_human = []
         visited_pairs = set()
         for human1 in self.humans:
@@ -1388,30 +1422,29 @@ class PairsManager:
                                             if key1 not in visited_pairs:
                                                 visited_pairs.add(key1)
                                                 
-                                                a = calculate_intersection_area_ltrb(last_point1, last_point2)
+                                                percentage_intersection = calculate_intersection_area_ltrb(last_point1, last_point2)
                                                 cb = check_box_relationship(last_point1, last_point2)
                                                 
                                                 
-                                                """c_1, r__1 = box_to_circle(last_point1)
-                                                c_2, r__2 = box_to_circle(last_point2)
+                                                #c_1, r__1 = box_to_circle(last_point1)
+                                                #c_2, r__2 = box_to_circle(last_point2)
 
-                                                intersection_area, percentage_intersection = circle_intersection_area(r__1, c_1, r__2, c_2)
-                                                a = percentage_intersection
+                                                #intersection_area, percentage_intersection = circle_intersection_area(r__1, c_1, r__2, c_2)
                                                 
-                                                """
-                                                if a >= percent_area or cb[0] is True:
+                                                
+                                                if percentage_intersection >= percent_area or cb[0] is True:
                                                     result_intersection_human.append((
                                                         (human1.human_id, human2.human_id),
                                                         last_point1, 
                                                         last_point2, 
-                                                        a, 
+                                                        percentage_intersection, 
                                                         cb,
                                                         (human1, human2)
                                                         ))
                 
         return result_intersection_human                                   
     
-    def intersection_bag(self, id_camera=-1, percent_area = pairs_manager_intersection_bag_percent_area, delta_time_limit=None):
+    def intersection_bag(self, id_camera=-1, percent_area = pairs_manager_intersection_bag_percent_area, delta_time_limit=intersection_bag_delta_time_limit):
         result_intersection_bag = []
         visited_pairs = set()
         for bag1 in self.bags:
@@ -1553,7 +1586,9 @@ class PairsManager:
                         continue
                     bbox = track.to_ltrb()
                     original_ltwh = track.original_ltwh
-                
+
+                    #if original_ltwh is not None:
+                    
                     if track.det_class in self.human_ids:
                         h = self.find_human(trackers_capacitor.get_uid_human(int(id_camera), int(track.track_id), int(track.det_class)) )
                         if h is None:
@@ -1607,6 +1642,8 @@ class PairsManager:
                             if len(bp) > 0:
                                 last_point_bag = bp[-1][1][0]
                                 original_ltwh_1 = bp[-1][1][1]
+                                time1 = bp[-1][0]
+                                        
                                 if original_ltwh_1 is None:
                                     continue
                                 for j, human1 in enumerate(self.humans):
@@ -1616,61 +1653,101 @@ class PairsManager:
                                             if len(hp) > 0:
                                                 last_point_human = hp[-1][1][0]
                                                 original_ltwh_2 = hp[-1][1][1]
+                                                time2 = hp[-1][0]
                                                 if original_ltwh_2 is None:
                                                     continue
                                                 
-                                                                                                
-                                                (circle_pb_last_x, circle_pb_last_y), circle_pb_last_radius = box_to_circle(last_point_bag)
-                                                (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius = box_to_circle(last_point_human)
+                                                delta_time_limit = push_tracks_delta_time_limit
+                                                delta_time = abs(time2 - time1)
+                                                state_2 = False
+                                                if delta_time != 0.0:
+                                                    print(f"delta_time: {delta_time}")
+                                                    pass
                                                 
-                                                """state_in = circle_intersection(
-                                                    (circle_pb_last_x, circle_pb_last_y), 
-                                                    (circle_ph_last_x, circle_ph_last_y), 
-                                                    circle_pb_last_radius, 
-                                                    circle_ph_last_radius    
-                                                )"""
+                                                if delta_time < delta_time_limit:
+                                                    state_2 = True
                                                 
-                                                state_in = circle_intersection_area(
-                                                    circle_pb_last_radius, 
-                                                    (circle_pb_last_x, circle_pb_last_y), 
-                                                    circle_ph_last_radius, 
-                                                    (circle_ph_last_x, circle_ph_last_y)
-                                                )
                                                 
-                                                if state_in[1] > push_tracks_state_in_circle_intersection_area:
-                                                    state_in = 1
-                                                else:
-                                                    state_in = 0    
+                                                pass 
+                                                
+                                                if state_2 is True:
                                                     
-                                                center1 = (int(((last_point_bag[0]) + (last_point_bag[2]))/2), 
-                                                            int(((last_point_bag[1]) + (last_point_bag[3]))/2))
-                                                
-                                                center2 = (int(((last_point_human[0]) + (last_point_human[2]))/2), 
-                                                            int(((last_point_human[1]) + (last_point_human[3]))/2))
-                                                
-                                                len_pp = distance_between_points(center1, center2)
-                                                
-                                                state_original = True 
-                                                if state_in is True or state_in == 1:
-                                                    array_pair.append((
-                                                        i, 
-                                                        j, 
-                                                        len_pp, 
-                                                        last_point_bag, 
-                                                        last_point_human, 
-                                                        bag1.det_class, 
-                                                        human1.det_class,
-                                                        state_in,
-                                                        bag1,
-                                                        human1,
-                                                        state_original
-                                                    ))
+                                                    (circle_pb_last_x, circle_pb_last_y), circle_pb_last_radius = box_to_circle(last_point_bag)
+                                                    (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius = box_to_circle(last_point_human)
+                                                    
+                                                    """state_in = circle_intersection(
+                                                        (circle_pb_last_x, circle_pb_last_y), 
+                                                        (circle_ph_last_x, circle_ph_last_y), 
+                                                        circle_pb_last_radius, 
+                                                        circle_ph_last_radius    
+                                                    )"""
+                                                    
+                                                    state_in = circle_intersection_area(
+                                                        circle_pb_last_radius, 
+                                                        (circle_pb_last_x, circle_pb_last_y), 
+                                                        circle_ph_last_radius, 
+                                                        (circle_ph_last_x, circle_ph_last_y)
+                                                    )
+                                                    
+                                                    if state_in[1] > push_tracks_state_in_circle_intersection_area:
+                                                        state_in = 1
+                                                    else:
+                                                        state_in = 0    
+                                                        
+                                                    center1 = (int(((last_point_bag[0]) + (last_point_bag[2]))/2), 
+                                                                int(((last_point_bag[1]) + (last_point_bag[3]))/2))
+                                                    
+                                                    center2 = (int(((last_point_human[0]) + (last_point_human[2]))/2), 
+                                                                int(((last_point_human[1]) + (last_point_human[3]))/2))
+                                                    
+                                                    len_pp = distance_between_points(center1, center2)
+                                                    
+                                                    state_original = True 
+                                                    if state_in is True or state_in == 1:
+                                                        array_pair.append((
+                                                            i, 
+                                                            j, 
+                                                            len_pp, 
+                                                            last_point_bag, 
+                                                            last_point_human, 
+                                                            bag1.det_class, 
+                                                            human1.det_class,
+                                                            state_in,
+                                                            bag1,
+                                                            human1,
+                                                            state_original
+                                                        ))
                                         else:
                                             pass
                         else:
                             pass          
                 
-                unique_data = {}
+                visited = set()  # Множина для відстеження вже відвіданих пар
+
+                result = []  # Результат
+
+                for i in range(len(array_pair)):
+                    if i not in visited:  # Якщо цю пару ще не відвідували
+                        current_pair = array_pair[i]
+                        min_value = current_pair[2]
+                        min_index = i
+                        
+                        # Знаходимо всі інші пари з такими самими елементами, але з іншим числом
+                        same_pairs = [current_pair]
+                        for j in range(i + 1, len(array_pair)):
+                            if current_pair[8].bag_id == array_pair[j][8].bag_id and current_pair[2] != array_pair[j][2]:
+                                same_pairs.append(array_pair[j])
+                                visited.add(j)  # Помічаємо їх, щоб не дублювати
+                                
+                                if array_pair[j][2] < min_value:
+                                    min_value = array_pair[j][2]
+                                    min_index = j
+                        
+                        result.append(same_pairs[min_index - i])  # Додаємо пару з мінімальним числом до результату
+                
+                array_pair = result
+                
+                """unique_data = {}
                 #пошук пар мінімальної відстані між сумкою і людиною
                 for i_1, item_one in enumerate(array_pair):
                     item_bag = item_one[8]
@@ -1680,10 +1757,15 @@ class PairsManager:
                             #if i_1 != i_2:
                                 item_bag_inline = item_two[8]
                                 item_human_inline = item_two[9]
+                                
                                 if isinstance(item_bag_inline, Bag) and isinstance(item_human_inline, Human):
+                                    
                                     key = (item_bag.bag_id)
+                                    
                                     if item_bag.bag_id == item_bag_inline.bag_id:
+                                        
                                         if key not in unique_data:
+                                            
                                             if item_one[2] < item_two[2]:
                                                 unique_data[key] = item_one
                                             elif item_one[2] > item_two[2]:
@@ -1692,13 +1774,12 @@ class PairsManager:
                                                 unique_data[key] = item_one
                               
                                         else:
-                                            if item_one[2] < unique_data[key][2] and unique_data[key][2] < item_two[2]:
+                                            if item_one[2] < unique_data[key][2] < item_two[2]:
                                                 unique_data[key] = item_one
-                                            elif item_one[2] > unique_data[key][2] and unique_data[key][2] > item_two[2]:
+                                            elif item_one[2] > unique_data[key][2] > item_two[2]:
                                                 unique_data[key] = item_two
                                           
-                                            
-                array_pair = list(unique_data.values())
+                array_pair = list(unique_data.values())"""
                 
                 if len(array_pair) > 0:
                     pass
@@ -1736,19 +1817,19 @@ class PairsManager:
                         """if pone.cold or pone.pre_cold:
                             pone.cold = False
                             pone.pre_cold = False"""
-                        if current_state is not None:
-                            array_pair_hot.append(pone)
-                            state_add = self.test_pone(
-                                current_state, 
-                                delta, 
-                                its_new_pair, 
-                                pone, 
-                                limit_len, 
-                                pair_on_other_cameras
-                            )
-                            
-                            if state_add is True:
-                                array_mod.append(pone)
+                        
+                        array_pair_hot.append(pone)
+                        state_add = self.test_pone(
+                            current_state, 
+                            delta, 
+                            its_new_pair, 
+                            pone, 
+                            limit_len, 
+                            pair_on_other_cameras
+                        )
+                        
+                        if state_add is True:
+                            array_mod.append(pone)
                             
                         #print("f")
                         pass
