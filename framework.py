@@ -288,38 +288,6 @@ def get_min_len_human_baggage(points, unions, dict_indexs):
     
     return r2
 
-"""def intersection(points, dict_indexs, kad_a=intersection_kad_a, percent_area=intersection_percent_area):
-    
-    points_result = []
-    for pt in points:
-        if len(pt) >= kad_a:
-            points_result.append(pt)
-    
-    result_ = []
-    union = []
-    visited_pairs = set()
-
-    for id1 in points_result:
-        last_point1 = id1[-1]
-        for id2 in points_result:
-            last_point2 = id2[-1] 
-            if last_point1[0] == last_point2[0] and last_point1[2] != last_point2[2]:
-                key1 = tuple(sorted([last_point1[2], last_point2[2]]))
-                if key1 not in visited_pairs:
-                    visited_pairs.add(key1)
-                    
-                    a = calculate_intersection_area_ltrb(last_point1[3], last_point2[3])
-                    cb = check_box_relationship(last_point1[3], last_point2[3])
-                    
-                    if a >= percent_area or cb[0] is True:
-                        result_.append(((last_point1[2], last_point2[2]), last_point1, last_point2, a, cb))
-                        union.append((last_point1[2], last_point2[2]))
-    
-    if len(union) > 0:
-        pass
-    
-    return points_result, union
-"""
 def circle_intersection_area(radius1, center1, radius2, center2):
     d = math.sqrt((center1[0] - center2[0]) ** 2 + (center1[1] - center2[1]) ** 2)
 
@@ -391,6 +359,7 @@ class QMutexContextManager:
     
     def unlock(self):
         self.mutex.unlock()
+
 
 class TrackersCapacitor:
     def __init__(self):
@@ -484,7 +453,9 @@ class TrackersCapacitor:
             self.already_created_index_pair[key] = new_idx
             return new_idx
 
+
 trackers_capacitor = TrackersCapacitor()
+
 
 class Human:
     
@@ -608,9 +579,6 @@ class Pair:
         self.threshold_two = pair_threshold_two
         
         self.last_time_update = None
-        
-        #self.pre_cold = False 
-        #self.cold = False
     
     def get_len(self):
         return len(self.intersection_array)
@@ -1525,7 +1493,6 @@ class PairsManager:
                     if pone.id_camera == id_current_camera:# and not pone.cold:
                         # Перевіряємо, чи ID пари є в current_pairs_ids
                         if pone.current_id not in current_pairs_ids:
-                            #pone.pre_cold = True
                             result_pairs.append(pone)
         return result_pairs
 
@@ -1646,6 +1613,7 @@ class PairsManager:
                                         
                                 if original_ltwh_1 is None:
                                     continue
+                                
                                 for j, human1 in enumerate(self.humans):
                                     if isinstance(human1, Human):
                                         hp = human1.get_points(id_camera)
@@ -1654,6 +1622,7 @@ class PairsManager:
                                                 last_point_human = hp[-1][1][0]
                                                 original_ltwh_2 = hp[-1][1][1]
                                                 time2 = hp[-1][0]
+                                                
                                                 if original_ltwh_2 is None:
                                                     continue
                                                 
@@ -1661,26 +1630,17 @@ class PairsManager:
                                                 delta_time = abs(time2 - time1)
                                                 state_2 = False
                                                 if delta_time != 0.0:
-                                                    print(f"delta_time: {delta_time}")
+                                                    #print(f"delta_time: {delta_time}")
                                                     pass
                                                 
                                                 if delta_time < delta_time_limit:
                                                     state_2 = True
-                                                
-                                                
                                                 pass 
                                                 
                                                 if state_2 is True:
                                                     
                                                     (circle_pb_last_x, circle_pb_last_y), circle_pb_last_radius = box_to_circle(last_point_bag)
                                                     (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius = box_to_circle(last_point_human)
-                                                    
-                                                    """state_in = circle_intersection(
-                                                        (circle_pb_last_x, circle_pb_last_y), 
-                                                        (circle_ph_last_x, circle_ph_last_y), 
-                                                        circle_pb_last_radius, 
-                                                        circle_ph_last_radius    
-                                                    )"""
                                                     
                                                     state_in = circle_intersection_area(
                                                         circle_pb_last_radius, 
@@ -1747,40 +1707,6 @@ class PairsManager:
                 
                 array_pair = result
                 
-                """unique_data = {}
-                #пошук пар мінімальної відстані між сумкою і людиною
-                for i_1, item_one in enumerate(array_pair):
-                    item_bag = item_one[8]
-                    item_human = item_one[9]
-                    if isinstance(item_bag, Bag) and isinstance(item_human, Human):
-                        for i_2, item_two in enumerate(array_pair):
-                            #if i_1 != i_2:
-                                item_bag_inline = item_two[8]
-                                item_human_inline = item_two[9]
-                                
-                                if isinstance(item_bag_inline, Bag) and isinstance(item_human_inline, Human):
-                                    
-                                    key = (item_bag.bag_id)
-                                    
-                                    if item_bag.bag_id == item_bag_inline.bag_id:
-                                        
-                                        if key not in unique_data:
-                                            
-                                            if item_one[2] < item_two[2]:
-                                                unique_data[key] = item_one
-                                            elif item_one[2] > item_two[2]:
-                                                unique_data[key] = item_two
-                                            elif item_one[2] == item_two[2]:
-                                                unique_data[key] = item_one
-                              
-                                        else:
-                                            if item_one[2] < unique_data[key][2] < item_two[2]:
-                                                unique_data[key] = item_one
-                                            elif item_one[2] > unique_data[key][2] > item_two[2]:
-                                                unique_data[key] = item_two
-                                          
-                array_pair = list(unique_data.values())"""
-                
                 if len(array_pair) > 0:
                     pass
                 
@@ -1814,9 +1740,6 @@ class PairsManager:
                             its_new_pair = True
                         elif pone is not None:
                             current_state, delta = pone.update(one_pair[7], one_pair[10])
-                        """if pone.cold or pone.pre_cold:
-                            pone.cold = False
-                            pone.pre_cold = False"""
                         
                         array_pair_hot.append(pone)
                         state_add = self.test_pone(
@@ -1831,7 +1754,6 @@ class PairsManager:
                         if state_add is True:
                             array_mod.append(pone)
                             
-                        #print("f")
                         pass
                 
                 
@@ -1848,15 +1770,11 @@ class PairsManager:
                         
                         current_state, delta = pone.update(0)
                         
-                        """if delta is True and pone.pre_cold is True:
-                            pone.cold = True"""
-                        
                         state_add = self.test_pone(current_state, delta, its_new_pair, pone, limit_len, pair_on_other_cameras)
                         
                         if state_add is True:
                             array_mod.append(pone)
-                            
-                        #print("f")
+
                         pass
                 
                 pass
