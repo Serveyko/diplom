@@ -13,7 +13,8 @@ from config import intersection_percent_area, intersection_kad_a, pairs_manager_
 from config import pairs_manager_intersection_bag_percent_area, push_tracks_state_in_circle_intersection_area
 from config import push_tracks_test_pone_limit_len, push_tracks_delta_time_limit
 from config import intersection_human_delta_time_limit, intersection_bag_delta_time_limit
-from config import entity_manager_update_remove_info, entity_manager_update_create_info
+from config import entity_manager_update_remove_bag_info, entity_manager_update_create_info
+from config import entity_manager_resized_update_info, entity_manager_update_remove_all_bags_info
 
 from PyQt5.QtCore import QMutex
 
@@ -1128,9 +1129,9 @@ class EntityManager:
         pre_logs = []
         self.humans_copied_list = self.humans.copy() 
         
-        bags_and_humans_by_logs = []
+        bags_and_humans_by_old_logs = []
         if isinstance(pman, PairsManager):
-            bags_and_humans_by_logs = pman.get_bags_and_humans_by_logs(self.logs)
+            bags_and_humans_by_old_logs = pman.get_bags_and_humans_by_logs(self.logs)
         
         if self.old_array_update is not None:
             pass
@@ -1233,7 +1234,7 @@ class EntityManager:
                     if elem_log[2] == "create":
                         elog.create(elem_log[0].get_idx(), elem_log[1], create=True, info_text=entity_manager_update_create_info)
                     elif elem_log[2] == "remove":
-                        elog.create(elem_log[0].get_idx(), elem_log[1], remove=True, info_text=entity_manager_update_remove_info)
+                        elog.create(elem_log[0].get_idx(), elem_log[1], remove=True, info_text=entity_manager_update_remove_bag_info)
                     self.logs.append(elog)
                     new_logs.append(elog)
         if len(self.logs) > 0:
@@ -1246,8 +1247,35 @@ class EntityManager:
         if isinstance(pman, PairsManager):
             bags_and_humans_by_new_logs = pman.get_bags_and_humans_by_logs(new_logs)
         
-        for elem_new_log in new_logs:
-            if isinstance(elem_new_log, EntityManager.ELog):
+        for i, elem_new_log in enumerate(new_logs):
+            if isinstance(elem_new_log, EntityManager.ELog) and elem_new_log.create_elem is True:
+                #тут порівнюємо кількість і клас сумок до і після 
+                if bags_and_humans_by_old_logs is not None and bags_and_humans_by_new_logs is not None:
+                    bah_humans = bags_and_humans_by_new_logs[i][0]
+                    bah_bags = bags_and_humans_by_new_logs[i][1]
+                    
+                    for j, bah_old in enumerate(bags_and_humans_by_old_logs):
+                        bah_old_humans = bah_old[0]
+                        bah_old_bags = bah_old[1]
+                        
+                        a = [val.human_id for val in bah_humans if isinstance(val, Human)]
+                        b = [val.human_id for val in bah_old_humans if isinstance(val, Human)]
+                        if test_multy_issubset(a, b):
+                            if len(bah_bags) == len(bah_old_bags):
+                                elem_new_log.info_text = entity_manager_resized_update_info
+                                break
+                            pass
+                    
+                    pass
+                pass
+            elif isinstance(elem_new_log, EntityManager.ELog) and elem_new_log.remove_elem is True:
+                human_idx = elem_new_log.human_idx
+                for sh in self.humans:
+                    if isinstance(sh, EntityManager.EHuman) and test_multy_issubset(human_idx, sh.array_idx):
+                        bags = sh.get_bags()
+                        if len(bags) <= 0:
+                            elem_new_log.info_text = entity_manager_update_remove_all_bags_info
+                            break
                 pass
         
         return self.logs

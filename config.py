@@ -19,7 +19,7 @@ timeout_widget = 30
 resize_with_width = 600
 
 
-function_caller_thread_state = "timer" #"timer" or "thread"
+function_caller_thread_state = "thread" #"timer" or "thread"
 
 
 deepface_detector_backend = 'retinaface'
@@ -72,7 +72,9 @@ intersection_human_delta_time_limit = 1.0
 intersection_bag_delta_time_limit = 1.0
 
 entity_manager_update_create_info = "Багаж з'явився."
-entity_manager_update_remove_info = "Багаж зник."
+entity_manager_update_remove_bag_info = "Сумка зникла."
+entity_manager_resized_update_info = "Зміна розміру"
+entity_manager_update_remove_all_bags_info = "Багаж зник."
 
 """param_yolov8_detect_model_path = Parameter(name='yolov8_detect_model_path', original_value=r"D:\MY_WORKS\FindHumans\yolov8n.pt")
     param_main_process_count_frames = Parameter(name='main_process_count_frames', original_value=1)
