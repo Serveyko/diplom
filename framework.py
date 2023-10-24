@@ -1650,7 +1650,7 @@ class PairsManager:
                             self.unions_bags[key] = rib 
                     pass
                     
-                array_pair = []
+                """array_pair = []
                 for i, bag1 in enumerate(self.bags):
                     if isinstance(bag1, Bag):
                         bp = bag1.get_points(id_camera)
@@ -1729,7 +1729,112 @@ class PairsManager:
                                         else:
                                             pass
                         else:
-                            pass          
+                            pass  """
+                
+                array_pair = []
+                for i, bag1 in enumerate(self.bags):
+                    if isinstance(bag1, Bag):
+                        bp = bag1.get_points(id_camera)
+                        if bp != None:
+                            if len(bp) > 0:
+                                last_point_bag = bp[-1][1][0]
+                                original_ltwh_1 = bp[-1][1][1]
+                                time1 = bp[-1][0]
+                                        
+                                if original_ltwh_1 is None:
+                                    continue
+                                
+                                for j, human1 in enumerate(self.humans):
+                                    if isinstance(human1, Human):
+                                        hp = human1.get_points(id_camera)
+                                        if hp != None:
+                                            if len(hp) > 0:
+                                                last_point_human = hp[-1][1][0]
+                                                original_ltwh_2 = hp[-1][1][1]
+                                                time2 = hp[-1][0]
+                                                
+                                                if original_ltwh_2 is None:
+                                                    continue
+                                                
+                                                delta_time_limit = push_tracks_delta_time_limit
+                                                delta_time = abs(time2 - time1)
+                                                state_2 = False
+                                                if delta_time != 0.0:
+                                                    #print(f"delta_time: {delta_time}")
+                                                    pass
+                                                
+                                                if delta_time < delta_time_limit:
+                                                    state_2 = True
+                                                pass 
+                                                
+                                                if state_2 is True:
+                                                    
+                                                    (circle_pb_last_x, circle_pb_last_y), circle_pb_last_radius = box_to_circle(last_point_bag)
+                                                    (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius = box_to_circle(last_point_human)
+                                                    
+                                                    state_in = circle_intersection_area(
+                                                        circle_pb_last_radius, 
+                                                        (circle_pb_last_x, circle_pb_last_y), 
+                                                        circle_ph_last_radius, 
+                                                        (circle_ph_last_x, circle_ph_last_y)
+                                                    )
+                                                    state_in = state_in[1]
+                                                    
+                                                    center1 = (int(((last_point_bag[0]) + (last_point_bag[2]))/2), 
+                                                                int(((last_point_bag[1]) + (last_point_bag[3]))/2))
+                                                    
+                                                    center2 = (int(((last_point_human[0]) + (last_point_human[2]))/2), 
+                                                                int(((last_point_human[1]) + (last_point_human[3]))/2))
+                                                    len_pp = distance_between_points(center1, center2)
+                                                    
+                                                    if state_in > push_tracks_state_in_circle_intersection_area:
+                                                        state_in = 1.0
+                                                    else:
+                                                        state_in = 0.5  
+                                                    
+                                                    len_pp = len_pp * state_in
+                                                    
+                                                    state_in = 1
+                                                    state_original = True 
+                                                    array_pair.append((
+                                                        i, 
+                                                        j, 
+                                                        len_pp, 
+                                                        last_point_bag, 
+                                                        last_point_human, 
+                                                        bag1.det_class, 
+                                                        human1.det_class,
+                                                        state_in,
+                                                        bag1,
+                                                        human1,
+                                                        state_original
+                                                    ))           
+                
+                if len(array_pair) > 0:
+                    #print(f"B {array_pair}")
+                    pass
+                
+                result = []
+                
+                for i, pair_m in enumerate(array_pair):
+                    state_add = True
+                    bag_m = pair_m[8]
+                    if isinstance(bag_m, Bag):
+                        for j, pair_other in enumerate(array_pair):
+                            bag_other = pair_other[8]
+                            if isinstance(bag_other, Bag):
+                                if bag_m.bag_id == bag_other.bag_id:
+                                        if pair_m[2] > pair_other[2]:
+                                            state_add = False 
+                                            break 
+                    if state_add is True:
+                        result.append(pair_m)
+                
+                array_pair = result   
+                
+                if len(array_pair) > 0:
+                    #print(f"A {array_pair}")
+                    pass
                 
                 visited = set()  # Множина для відстеження вже відвіданих пар
 
