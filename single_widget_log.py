@@ -116,6 +116,12 @@ class CustomWidgetSingleLog(QWidget):
         self.text_label.setMinimumSize(50, 50)
         self.text_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.text_label)
+        
+        self.info_label = QLabel()
+        self.info_label.setMinimumSize(50, 50)
+        self.info_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.info_label)
+        
         self.image_label1 = HoverLabel()
         self.image_label1.setText("Human")
         layout.addWidget(self.image_label1)
@@ -132,6 +138,9 @@ class CustomWidgetSingleLog(QWidget):
         else:
             self.time_label.setText(time_current)
     
+    def set_info(self, text):
+        self.info_label.setText(text)
+        
     def set_text(self, text):
         self.text_label.setText(text)
 

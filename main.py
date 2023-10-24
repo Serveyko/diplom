@@ -210,6 +210,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         c_w_s_l.set_time(c_w_s_l.time_create)
                         c_w_s_l.set_text(str(uid_elem_))
                         c_w_s_l.set_images(image_human_, image_bag_)
+                        c_w_s_l.set_info(log_.info_text)
                         
                         if isinstance(self.verticalLayout_4, QtWidgets.QVBoxLayout):
                             self.verticalLayout_4.addWidget(c_w_s_l)

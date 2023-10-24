@@ -13,6 +13,7 @@ from config import intersection_percent_area, intersection_kad_a, pairs_manager_
 from config import pairs_manager_intersection_bag_percent_area, push_tracks_state_in_circle_intersection_area
 from config import push_tracks_test_pone_limit_len, push_tracks_delta_time_limit
 from config import intersection_human_delta_time_limit, intersection_bag_delta_time_limit
+from config import entity_manager_update_remove_info, entity_manager_update_create_info
 
 from PyQt5.QtCore import QMutex
 
@@ -1026,6 +1027,9 @@ class EntityManager:
             self.bags = []
             self.camera_id= camera_id
         
+        def get_bags(self):
+            return self.bags
+        
         def get_idx(self):
             return self.array_idx
         
@@ -1089,12 +1093,14 @@ class EntityManager:
             self.create_elem = None
             self.remove_elem = None
             self.camera_id = camera_id
+            self.info_text = ""
         
-        def create(self, human_idx, bag_idx, create=None, remove=None):
+        def create(self, human_idx, bag_idx, create=None, remove=None, info_text=""):
             self.human_idx = human_idx
             self.bag_idx = bag_idx
             self.create_elem = create
             self.remove_elem = remove
+            self.info_text = info_text
         
         def get_all(self):
             return self.human_idx, self.bag_idx
@@ -1118,8 +1124,13 @@ class EntityManager:
                     return human
         return None
     
-    def update(self, camera_id, array_update, array_all):
+    def update(self, camera_id, array_update, array_all, pman, eman):
         pre_logs = []
+        self.humans_copied_list = self.humans.copy() 
+        
+        bags_and_humans_by_logs = []
+        if isinstance(pman, PairsManager):
+            bags_and_humans_by_logs = pman.get_bags_and_humans_by_logs(self.logs)
         
         if self.old_array_update is not None:
             pass
@@ -1212,22 +1223,32 @@ class EntityManager:
                     print("C3")
                 self.humans.append(human)
             pass
-                  
+        
+        new_logs = [] 
         if len(pre_logs) > 0:
             
             for elem_log in pre_logs:
                 elog = EntityManager.ELog(camera_id)
                 if isinstance(elem_log[0], EntityManager.EHuman):
                     if elem_log[2] == "create":
-                        elog.create(elem_log[0].get_idx(), elem_log[1], create=True)
+                        elog.create(elem_log[0].get_idx(), elem_log[1], create=True, info_text=entity_manager_update_create_info)
                     elif elem_log[2] == "remove":
-                        elog.create(elem_log[0].get_idx(), elem_log[1], remove=True)
+                        elog.create(elem_log[0].get_idx(), elem_log[1], remove=True, info_text=entity_manager_update_remove_info)
                     self.logs.append(elog)
+                    new_logs.append(elog)
         if len(self.logs) > 0:
             #print(f"LEN {len(self.logs)}")
             pass
         
         self.old_array_update = array_update
+        
+        bags_and_humans_by_new_logs = []
+        if isinstance(pman, PairsManager):
+            bags_and_humans_by_new_logs = pman.get_bags_and_humans_by_logs(new_logs)
+        
+        for elem_new_log in new_logs:
+            if isinstance(elem_new_log, EntityManager.ELog):
+                pass
         
         return self.logs
                             
@@ -1930,7 +1951,7 @@ class PairsManager:
         
 def compare_arrays(camera_id, pman, eman, array_current, array_all):
     if isinstance(eman, EntityManager) and isinstance(pman, PairsManager):
-        logs = eman.update(camera_id, array_current, array_all)   
+        logs = eman.update(camera_id, array_current, array_all, pman, eman)   
         humans_and_bags = pman.get_bags_and_humans_by_logs(logs)
         array_all_humans_and_bags = []
         for elem in array_all:
