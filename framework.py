@@ -393,9 +393,9 @@ class TrackersCapacitor:
             #embedder = 'clip_ViT-B/16'
             #embedder = 'mobilenet'
             tracker = DeepSort(
-                max_age=3, 
+                max_age=30, 
                 embedder='mobilenet', 
-                max_iou_distance=0.9, 
+                #max_iou_distance=0.9, 
                 embedder_gpu=False
             )
             self.put(index_create, tracker )
@@ -1500,7 +1500,7 @@ class PairsManager:
                                 else:
                                     state_2 = True
                                 
-                                if bag1.bag_id != bag2.bag_id and state_2 is True:
+                                if bag1.bag_id != bag2.bag_id and state_2 is True and bag1.det_class == bag2.det_class:
                                     key1 = tuple(sorted([bag1.bag_id, bag2.bag_id]))
                                     if key1 not in visited_pairs:
                                         visited_pairs.add(key1)
