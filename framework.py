@@ -9,12 +9,16 @@ import cv2
 from config import white_list_handbag, white_list_person, pair_maxlen, pair_magic_one, pair_magic_two
 from config import pair_threshold_one, pair_threshold_two, entity_max_len_deque_images_camera
 from config import pairs_manager_max_len_deque_points_id, entity_after_reconfig_bag_group_percent_area
-from config import intersection_percent_area, intersection_kad_a, pairs_manager_intersection_human_percent_area
+from config import pairs_manager_intersection_human_percent_area
 from config import pairs_manager_intersection_bag_percent_area, push_tracks_state_in_circle_intersection_area
 from config import push_tracks_test_pone_limit_len, push_tracks_delta_time_limit
 from config import intersection_human_delta_time_limit, intersection_bag_delta_time_limit
 from config import entity_manager_update_remove_bag_info, entity_manager_update_create_info
 from config import entity_manager_resized_update_info, entity_manager_update_remove_all_bags_info
+from config import create_basic_tracker_deepsort_max_age
+from config import create_basic_tracker_deepsort_embedder
+from config import create_basic_tracker_deepsort_max_iou_distance 
+from config import create_basic_tracker_deepsort_embedder_gpu
 
 from PyQt5.QtCore import QMutex
 
@@ -393,10 +397,10 @@ class TrackersCapacitor:
             #embedder = 'clip_ViT-B/16'
             #embedder = 'mobilenet'
             tracker = DeepSort(
-                max_age=30, 
-                embedder='mobilenet', 
-                #max_iou_distance=0.9, 
-                embedder_gpu=False
+                max_age=create_basic_tracker_deepsort_max_age, 
+                embedder=create_basic_tracker_deepsort_embedder, 
+                max_iou_distance=create_basic_tracker_deepsort_max_iou_distance, 
+                embedder_gpu=create_basic_tracker_deepsort_embedder_gpu
             )
             self.put(index_create, tracker )
     
@@ -1735,7 +1739,7 @@ class PairsManager:
                 for i, bag1 in enumerate(self.bags):
                     if isinstance(bag1, Bag):
                         bp = bag1.get_points(id_camera)
-                        if bp != None:
+                        if bp != None:  # noqa: E711
                             if len(bp) > 0:
                                 last_point_bag = bp[-1][1][0]
                                 original_ltwh_1 = bp[-1][1][1]
@@ -1747,7 +1751,7 @@ class PairsManager:
                                 for j, human1 in enumerate(self.humans):
                                     if isinstance(human1, Human):
                                         hp = human1.get_points(id_camera)
-                                        if hp != None:
+                                        if hp != None:  # noqa: E711
                                             if len(hp) > 0:
                                                 last_point_human = hp[-1][1][0]
                                                 original_ltwh_2 = hp[-1][1][1]

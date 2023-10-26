@@ -76,67 +76,10 @@ entity_manager_update_remove_bag_info = "Сумка зникла."
 entity_manager_resized_update_info = "Зміна розміру"
 entity_manager_update_remove_all_bags_info = "Багаж зник."
 
-"""param_yolov8_detect_model_path = Parameter(name='yolov8_detect_model_path', original_value=r"D:\MY_WORKS\FindHumans\yolov8n.pt")
-    param_main_process_count_frames = Parameter(name='main_process_count_frames', original_value=1)
-    param_main_process_timer_timestep = Parameter(name='main_process_timer_timestep', original_value=300)
-    param_main_process_timer_small_timestep = Parameter(name='main_process_timer_small_timestep', original_value=30)
-    param_standart_width = Parameter(name='standart_width', original_value=600)
-    param_standart_height = Parameter(name='standart_height', original_value=400)
-    param_timeout_is_file_widget = Parameter(name='timeout_is_file_widget', original_value=30)
-    param_timeout_widget = Parameter(name='timeout_widget', original_value=30)
-    param_resize_with_width = Parameter(name='resize_with_width', original_value=600)
-    param_database_url = Parameter(name='database_url', original_value='sqlite:///people_logs_photos.db')
-    param_deepface_detector_backend = Parameter(name='deepface_detector_backend', original_value='retinaface')
-    param_person = Parameter(name='person', original_value=0)
-    param_handbag = Parameter(name='handbag', original_value=26)
-    param_suitcase = Parameter(name='suitcase', original_value=28)
-    param_pair_maxlen = Parameter(name='pair_maxlen', original_value=10000)
-    param_pair_magic_one = Parameter(name='pair_magic_one', original_value=0.2)
-    param_pair_magic_two = Parameter(name='pair_magic_two', original_value=0.2)
-    param_pair_threshold_one = Parameter(name='pair_threshold_one', original_value=0.20)
-    param_pair_threshold_two = Parameter(name='pair_threshold_two', original_value=0.1)
-    param_entity_max_len_deque_images_camera = Parameter(name='entity_max_len_deque_images_camera', original_value=10)
-    param_entity_after_reconfig_bag_group_percent_area = Parameter(name='entity_after_reconfig_bag_group_percent_area', original_value=20)
-    param_pairs_manager_max_len_deque_points_id = Parameter(name='pairs_manager_max_len_deque_points_id', original_value=300)
-    param_pairs_manager_intersection_human_percent_area = Parameter(name='pairs_manager_intersection_human_percent_area', original_value=10)
-    param_pairs_manager_intersection_bag_percent_area = Parameter(name='pairs_manager_intersection_bag_percent_area', original_value=30)
-    param_intersection_percent_area = Parameter(name='intersection_percent_area', original_value=30)
-    param_intersection_kad_a = Parameter(name='intersection_kad_a', original_value=1)
-    param_timer_log_update_update_interval = Parameter(name='timer_log_update_update_interval', original_value=1000)
-    param_timer_human_update_update_interval = Parameter(name='timer_human_update_update_interval', original_value=1000)
-    param_timer_merge_by_face_timestep = Parameter(name='timer_merge_by_face_timestep', original_value=1000)
-    #param_ = Parameter(name='', original_value=-1)
-    
-    session.add(param_yolov8_detect_model_path)
-    session.add(param_main_process_count_frames)
-    session.add(param_main_process_timer_timestep)
-    session.add(param_main_process_timer_small_timestep)
-    session.add(param_standart_width)
-    session.add(param_standart_height)
-    session.add(param_timeout_is_file_widget)
-    session.add(param_timeout_widget)
-    session.add(param_resize_with_width)
-    session.add(param_database_url)
-    session.add(param_deepface_detector_backend)
-    session.add(param_person)
-    session.add(param_handbag)
-    session.add(param_suitcase)
-    session.add(param_pair_maxlen)
-    session.add(param_pair_magic_one)
-    session.add(param_pair_magic_two)
-    session.add(param_pair_threshold_one)
-    session.add(param_pair_threshold_two)
-    session.add(param_entity_max_len_deque_images_camera)
-    session.add(param_entity_after_reconfig_bag_group_percent_area)
-    session.add(param_pairs_manager_max_len_deque_points_id)
-    session.add(param_pairs_manager_intersection_human_percent_area)
-    session.add(param_pairs_manager_intersection_bag_percent_area)
-    session.add(param_intersection_percent_area)
-    session.add(param_intersection_kad_a)
-    session.add(param_timer_log_update_update_interval)
-    session.add(param_timer_human_update_update_interval)
-    session.add(param_timer_merge_by_face_timestep)
-    session.commit()"""
+create_basic_tracker_deepsort_max_age = 30
+create_basic_tracker_deepsort_embedder='mobilenet'
+create_basic_tracker_deepsort_max_iou_distance = 0.7
+create_basic_tracker_deepsort_embedder_gpu=False
 
 
 def load_all_config():
@@ -169,6 +112,14 @@ def load_all_config():
     global push_tracks_delta_time_limit
     global intersection_human_delta_time_limit
     global intersection_bag_delta_time_limit
+    global entity_manager_update_create_info 
+    global entity_manager_update_remove_bag_info 
+    global entity_manager_resized_update_info 
+    global entity_manager_update_remove_all_bags_info 
+    global create_basic_tracker_deepsort_max_age
+    global create_basic_tracker_deepsort_embedder
+    global create_basic_tracker_deepsort_max_iou_distance 
+    global create_basic_tracker_deepsort_embedder_gpu
     
     loaded_params = start_load_save_params(session, params_dict)
 
@@ -262,7 +213,31 @@ def load_all_config():
             elif name == 'intersection_bag_delta_time_limit':
                 intersection_bag_delta_time_limit = sparam.current_value
                 pass
-                
+            elif name == 'entity_manager_update_create_info':
+                entity_manager_update_create_info = sparam.current_value
+                pass
+            elif name == 'entity_manager_update_remove_bag_info':
+                entity_manager_update_remove_bag_info = sparam.current_value
+                pass
+            elif name == 'entity_manager_resized_update_info': 
+                entity_manager_resized_update_info = sparam.current_value
+                pass
+            elif name == 'entity_manager_update_remove_all_bags_info':
+                entity_manager_update_remove_all_bags_info = sparam.current_value
+                pass
+            elif name == 'create_basic_tracker_deepsort_max_age':
+                create_basic_tracker_deepsort_max_age = sparam.current_value
+                pass
+            elif name == 'create_basic_tracker_deepsort_embedder':
+                create_basic_tracker_deepsort_embedder = sparam.current_value
+                pass
+            elif name == 'create_basic_tracker_deepsort_max_iou_distance':
+                create_basic_tracker_deepsort_max_iou_distance = sparam.current_value
+                pass
+            elif name == 'create_basic_tracker_deepsort_embedder_gpu':
+                create_basic_tracker_deepsort_embedder_gpu = sparam.current_value
+                pass
+                        
 
 load_all_config()
 

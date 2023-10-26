@@ -33,12 +33,19 @@ class ParamWidget(QWidget):
         
         self.text_input_int = False
         self.text_input_float = False
+        self.text_input_bool = False
+        
+        self.original_value = None
     
-    def set_values(self, label_text, text_text):
+    def set_values(self, label_text, text_text, original_value):
+        self.original_value = original_value
+        
         if isinstance(text_text, int):
             self.text_input_int = True
         elif isinstance(text_text, float):
             self.text_input_float = True
+        elif isinstance(text_text, bool):
+            self.text_input_bool = True
             
         self.label.setText(str(label_text))
         self.text_edit.setText(str(text_text))
@@ -48,10 +55,15 @@ class ParamWidget(QWidget):
         if self.text_input_int is True:
             val = int(self.text_edit.text()) 
         elif self.text_input_float is True:
-            val = float(self.text_edit.text()) 
+            val = float(self.text_edit.text())
+        elif self.text_input_bool is True: 
+            val = bool(True if self.text_edit.text() == "True" or self.text_edit.text() == "true" else False)
         else:
             val = str(self.text_edit.text())
-            
+        
+        if val is None:
+            val = self.original_value
+        
         return (self.label.text(), val)
 
 class SettingsView(QWidget, Settings_ui_Form):
@@ -87,7 +99,7 @@ class SettingsView(QWidget, Settings_ui_Form):
         for sparam in loaded_params:
             if isinstance(sparam, Parameter):
                 pm = ParamWidget(self)
-                pm.set_values(sparam.name, sparam.current_value)
+                pm.set_values(sparam.name, sparam.current_value, sparam.original_value)
                 self.verticalLayout.addWidget(pm)
         
         self.func_save_settings()
@@ -133,7 +145,7 @@ class SettingsView(QWidget, Settings_ui_Form):
         for sparam in loaded_params:
             if isinstance(sparam, Parameter):
                 pm = ParamWidget(self)
-                pm.set_values(sparam.name, sparam.current_value)
+                pm.set_values(sparam.name, sparam.current_value, sparam.original_value)
                 self.verticalLayout.addWidget(pm)
     
     def closeEvent(self, event):

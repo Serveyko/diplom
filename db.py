@@ -94,8 +94,8 @@ params_dict = {
     'pairs_manager_max_len_deque_points_id': 300,
     'pairs_manager_intersection_human_percent_area': 10,
     'pairs_manager_intersection_bag_percent_area': 30,
-    'intersection_percent_area': 30,
-    'intersection_kad_a': 1,
+    #'intersection_percent_area': 30,
+    #'intersection_kad_a': 1,
     'timer_log_update_update_interval': 1000,
     'timer_human_update_update_interval': 1000,
     'timer_merge_by_face_timestep': 1000,
@@ -103,7 +103,15 @@ params_dict = {
     'push_tracks_test_pone_limit_len': 1,
     'push_tracks_delta_time_limit': 1.0,
     'intersection_human_delta_time_limit': 1.0,
-    'intersection_bag_delta_time_limit': 1.0
+    'intersection_bag_delta_time_limit': 1.0,
+    'entity_manager_update_create_info': "Багаж з'явився.",
+    'entity_manager_update_remove_bag_info': "Сумка зникла.",
+    'entity_manager_resized_update_info': "Зміна розміру.",
+    'entity_manager_update_remove_all_bags_info': "Багаж зник.",
+    'create_basic_tracker_deepsort_max_age': 30,
+    'create_basic_tracker_deepsort_embedder': 'mobilenet',
+    'create_basic_tracker_deepsort_max_iou_distance': 0.7,
+    'create_basic_tracker_deepsort_embedder_gpu': False
 }
 
 def save_one_params_settings(session, param_name, original_value, current_value):
