@@ -52,6 +52,8 @@ torch.set_num_threads(1)
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     
     def __init__(self):
+        """Ініціалізація в головному вікні основних змінних і даних з бази.
+        """
         super().__init__()
         self.setupUi(self)
         
@@ -116,11 +118,21 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.load_humans_db()
     
     def closeEvent(self, event):
+        """Подія яка викликається коли вікно завершує роботу
+
+        Args:
+            event (_type_): _description_
+        """
         self.pt_time.stop()
         self.save_humans_db()
         super().closeEvent(event)
     
     def push_plot_humans(self, plot_human):
+        """Засовуємо в масив людей яких будем малювати
+
+        Args:
+            plot_human (_type_): _description_
+        """
         try:
             self.locker_merge.lock()
             self.plot_humans.append(plot_human)
@@ -128,12 +140,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.locker_merge.unlock()
     
     def compare_faces_plot_human(self):
+        """Шукає однакові обличчя і об'єднує сутності"""
         try:
             self.plot_humans = work_plot_entity(self.plot_humans)
         except Exception as ex:
             print(ex)
     
     def load_humans_db(self):
+        """Завантажує людей із бази даних
+        """
         humans = load_humans(session)
         for human in humans:
             if isinstance(human, db_Human):
@@ -150,6 +165,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         pass
     
     def save_humans_db(self):
+        """Зберігає людей до бази даних
+        """
         for ph in self.plot_humans:
             if isinstance(ph, PlotEntity):
                 if ph.hdb is not None:
@@ -175,6 +192,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         pass
     
     def tab_changed(self, index):
+        """Це спрацьовує якщо наприклад вкладка із основної змінюється на іншу і так кожен раз
+
+        Args:
+            index (_type_): _description_
+        """
         active_tab_index = self.tabWidget.currentIndex()
         
         if active_tab_index == 1:
@@ -188,6 +210,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.timer_human_update.stop()
     
     def show_logs(self):
+        """Виводить логи у вкладку логів
+        """
         active_tab_index = self.tabWidget.currentIndex()
         
         if active_tab_index == 1:
@@ -196,10 +220,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 widget = self.verticalLayout_4.itemAt(i).widget()
                 if isinstance(widget, CustomWidgetSingleLog):
                     array_widget_uid_log.append(widget.uid_log)
-                """
-                if widget is not None:
-                    widget.deleteLater()
-                """
                 
             for a_f_l_i_h_a_b in self.array_frames_logs_images_human_and_bags:
                 (log_, uid_elem_, image_human_, image_bag_) = a_f_l_i_h_a_b
@@ -218,6 +238,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.sort_logs(self.verticalLayout_4)
     
     def delete_button_clicked_custom_widget_single_human(self, id_custom_widget_single_human = -1):
+        """Видаляє людей із виведення і списку якщо натиснули на кнопку видалити в вкладці люди і на людині є кнопка видалити.
+        Найкраще підходить для видалення людей з обличчями тому що видаляї їх.
+
+        Args:
+            id_custom_widget_single_human (int, optional): _description_. Defaults to -1.
+        """
         if id_custom_widget_single_human is not None and id_custom_widget_single_human != -1:
             is_rm = False
             for i in reversed(range(self.verticalLayout_6.count())):
@@ -250,6 +276,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         pass
     
     def show_humans(self):
+        """Показує людей у вкладці людей
+        """
         active_tab_index = self.tabWidget.currentIndex()
         
         if active_tab_index == 2:
@@ -296,11 +324,24 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.sort_humans(self.verticalLayout_6)
     
     def get_new_id_worker(self):
+        """Генерує ідентифікатор обробника
+
+        Returns:
+            _type_: _description_
+        """
         id = self.global_workers_index
         self.global_workers_index += 1
         return id
     
     def push_logs(self, frames, frames_logs_images_human_and_bags, frames_array_all_humans_and_bags, entities):
+        """Отримує логи від обробників логів і обробляючи їх отримує логи 
+
+        Args:
+            frames (_type_): _description_
+            frames_logs_images_human_and_bags (_type_): _description_
+            frames_array_all_humans_and_bags (_type_): _description_
+            entities (_type_): _description_
+        """
         #single element array input [(log, uid_elem, image_human, image_bag)]
         
         array_log_idx_exist = []
@@ -392,6 +433,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         pass
     
     def work_frames(self, frames):
+        """Обробляє фрейми і логи в них
+
+        Args:
+            frames (_type_): _description_
+        """
         frames_logs_images_human_and_bags = []
         frames_array_all_humans_and_bags = []
         entities = []
@@ -515,6 +561,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     
     def process_frames(self):
+        """Контролює процес обробки фреймів і запускає його 
+        """
         with self.pt_time:
             if (
                 self.fdc.empty() is not True and 
@@ -539,6 +587,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             
     
     def do_work_frame_data(self, frame_data_loc:FrameData):
+        """Отримує фрейми від віджетів які обробляють потоки через сигнали
+
+        Args:
+            frame_data_loc (FrameData): _description_
+        """
         try:
             self.lock_mutex.lock()
             self.fdc.put(frame_data_loc)
@@ -547,12 +600,21 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.lock_mutex.unlock()
     
     def open_settings(self):
+        """Показує віджет налаштувань
+        """
         self.settings_dialog.show()
     
     def create_humans(self):
+        """Показує віджет створення людини саме віджет де додаємо лиця і назву людини
+        """
         self.create_human_dialog.show()
 
     def open_file_dialog(self):
+        """Створює діалог в якому можна вибрати відео
+
+        Returns:
+            _type_: _description_
+        """
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getOpenFileName(
             self, 
@@ -567,6 +629,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return file_name
     
     def imitation_camera_is_file(self):
+        """Створює екземпляр відео потоку із файлу за допомогою віджетів обробки і керування
+        """
         file_name = self.open_file_dialog()
         if file_name:
             if file_name != "":
@@ -586,6 +650,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.create_camera_check_is_file(file_name)
     
     def sort_logs(self, layout):
+        """Сортує логи і додає спейсер якщо його немає
+
+        Args:
+            layout (_type_): _description_
+        """
         spacer = None
         widgets = []
         for i in range(layout.count()):
@@ -615,6 +684,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             layout.addItem(new_spacer)
     
     def sort_humans(self, layout):
+        """Сортує людей і додає спейсер якщо його немає
+
+        Args:
+            layout (_type_): _description_
+        """
         spacer = None
         widgets = []
         for i in range(layout.count()):
@@ -647,6 +721,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             
     
     def reorder_widgets(self, layout):
+        """Сортує віджети будь які і додає спейсер якщо його немає
+
+        Args:
+            layout (_type_): _description_
+        """
         # Шукайте спейсер в Layout
         spacer = None
         widgets = []
@@ -675,6 +754,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             layout.addItem(new_spacer)
     
     def find_widget_on_camera(self, index):
+        """Шукає віджети камери по індексу
+
+        Args:
+            index (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         for i in range(self.verticalLayout_2.count()):
             widget_item = self.verticalLayout_2.itemAt(i)
             widget = widget_item.widget()

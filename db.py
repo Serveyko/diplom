@@ -94,8 +94,6 @@ params_dict = {
     'pairs_manager_max_len_deque_points_id': 300,
     'pairs_manager_intersection_human_percent_area': 10,
     'pairs_manager_intersection_bag_percent_area': 30,
-    #'intersection_percent_area': 30,
-    #'intersection_kad_a': 1,
     'timer_log_update_update_interval': 1000,
     'timer_human_update_update_interval': 1000,
     'timer_merge_by_face_timestep': 1000,
