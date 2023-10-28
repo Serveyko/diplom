@@ -602,7 +602,9 @@ trackers_capacitor = TrackersCapacitor()
 
 
 class Human:
-    
+    """Представляє людину, має свій ідентифікатор і клас до якого належить
+    Тримає в собі також бокси які описують поточну людину а також камеру до якої належить
+    """
     def __init__(self, human_id=-1, det_class=None, max_len_deque_points_id = 300) -> None:
         self.human_id = human_id
         self.det_class = det_class
@@ -613,6 +615,13 @@ class Human:
         self.last_cam = deque(maxlen=1000)
     
     def append(self, id_camera=-1, data=None):
+        """Вставляє бокс опису людини в масив під індексом камери який представляє із себе кординату 
+        яка описує боксом людину. 
+
+        Args:
+            id_camera (int, optional): _description_. Defaults to -1.
+            data (_type_, optional): _description_. Defaults to None.
+        """
         if id_camera != -1:
             while len(self.pts_bbox_ltrb) - 1 < id_camera:
                 dq = deque(maxlen=self.max_len_deque_points_id)
@@ -623,6 +632,14 @@ class Human:
             self.last_cam.append(id_camera)
     
     def get_points(self, id_camera=-1):
+        """Повертає бокси по індексу камери
+
+        Args:
+            id_camera (int, optional): _description_. Defaults to -1.
+
+        Returns:
+            _type_: _description_
+        """
         if self.exist_camera_track(id_camera) is True:
             pts_m = self.pts_bbox_ltrb[id_camera]
             if pts_m is not None:
@@ -632,6 +649,14 @@ class Human:
         return None
     
     def exist_camera_track(self, id_camera=-1):
+        """Перевіряє чи є бокси по індексу камери
+
+        Args:
+            id_camera (int, optional): _description_. Defaults to -1.
+
+        Returns:
+            _type_: _description_
+        """
         if id_camera != -1 and id_camera >= 0:
             if len(self.pts_bbox_ltrb) - 1 < id_camera:
                 return False
@@ -640,6 +665,14 @@ class Human:
         return False
     
     def enable_one_camera(self, id_camera=-1):
+        """Записує останню камеру типу вмикаючи її
+
+        Args:
+            id_camera (int, optional): _description_. Defaults to -1.
+
+        Returns:
+            _type_: _description_
+        """
         if self.exist_camera_track(id_camera) is True:
             self.enable_last_camera_id = id_camera
             return True 
@@ -650,7 +683,8 @@ class Human:
 
 
 class Bag:
-    
+    """Описує сумку її бокси та клас сумки схожим чином до людини
+    """
     def __init__(self, bag_id=-1, det_class=None, max_len_deque_points_id = 300) -> None:
         self.bag_id = bag_id
         self.det_class = det_class
@@ -698,6 +732,8 @@ class Bag:
 
 
 class Pair:
+    """Описує пару людина сумка та рахує в неї перетини за допомогою згладжування
+    """
     def __init__(self, id_camera=-1, human=None, bag=None, maxlen=pair_maxlen) -> None:
         
         self.current_id = trackers_capacitor.get_uid_pair()
@@ -728,6 +764,16 @@ class Pair:
         return len(self.intersection_array)
     
     def update(self, st, reset_original=False):
+        """Функція оновлення одна з ключових функцій яка отримує поточний стан пари та додає
+        його в масив і рахує через згладження чи людина і сумка поряд чи ні.
+
+        Args:
+            st (_type_): _description_
+            reset_original (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
+        """
         before_state = False
         if reset_original is True:
             self.intersection_array.clear()
@@ -784,7 +830,11 @@ class Pair:
 
 
 class Entity:
+    """Сутність яка формується із людей в основному а також сумок.
+    Також в склад вхолять пари які із себе представляють пари людина сумка і дозволяють зрозуміти чи 
+    разом людина і сумка чи ні.
     
+    """
     def __init__(self) -> None:
         self.current_id = trackers_capacitor.get_uid_entity()
         self.humans = []
@@ -797,6 +847,15 @@ class Entity:
         self.max_len_deque_images_camera = entity_max_len_deque_images_camera
     
     def get_best_human(self, id_camera=-1):
+        """Пошук людини і найкращої тому що пошук іде за тим в кого найдовша довжина 
+        масиву боксів на якійсь камері а саме тій що передаємо аргументом.
+
+        Args:
+            id_camera (int, optional): _description_. Defaults to -1.
+
+        Returns:
+            _type_: _description_
+        """
         best_human = None 
         bbox_human = None
         original_ltwh_human = None
@@ -824,6 +883,12 @@ class Entity:
         return best_human, bbox_human, original_ltwh_human
     
     def append_image(self, id_camera=-1, image=None):
+        """Додає зображення для сутності і це треба щоб потім показувати їх в інтерефейсі що це належить цій людині 
+
+        Args:
+            id_camera (int, optional): _description_. Defaults to -1.
+            image (_type_, optional): _description_. Defaults to None.
+        """
         if id_camera != -1:
             while len(self.images_with_camera_id) - 1 < id_camera:
                 dqc = deque(maxlen=self.max_len_deque_images_camera)
@@ -965,6 +1030,12 @@ class Entity:
             self.bags.append(bag)
     
     def after_reconfig_bag_group(self, id_camera,  percent_area = entity_after_reconfig_bag_group_percent_area):
+        """Мержить групи після додавання за їх перетином
+
+        Args:
+            id_camera (_type_): _description_
+            percent_area (_type_, optional): _description_. Defaults to entity_after_reconfig_bag_group_percent_area.
+        """
         array_pts_group_bag = self.get_bbox_best_group_bag(id_camera)
         if len(array_pts_group_bag) > 1:
             pass
@@ -1072,6 +1143,11 @@ class Entity:
             self.pairs.append(pair)
     
     def get_unique_identifiers(self):
+        """Повертає унікальні ідентифікатори по суті всі групи які є з будь яким статусом.
+
+        Returns:
+            _type_: _description_
+        """
         human_keys = [one_human.human_id for one_human in self.humans if isinstance(one_human, Human)] 
         bags_keys = []
         for one_group in self.bag_group:
@@ -1095,6 +1171,14 @@ class Entity:
         return hk, bk
     
     def get_unique_identifiers_active_status(self, camera_id):
+        """Повертає тільки ті групи які мають активний статус перетину
+
+        Args:
+            camera_id (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         human_keys = [one_human.human_id for one_human in self.humans if isinstance(one_human, Human)] 
         human_keys = sorted(human_keys)
         hk = [int(one_key) for one_key in human_keys]
@@ -1134,6 +1218,14 @@ class Entity:
         return hk, bk
         
     def get_last_info(self, camera_id):
+        """Збирає все що було до того в одну систему і формує результат.
+
+        Args:
+            camera_id (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         bbox_human, original_ltwh_human = self.get_bbox_best_human(camera_id)
         array_pts_group_bag = self.get_bbox_best_group_bag(camera_id)
         return {
@@ -1144,6 +1236,11 @@ class Entity:
         
 
 class EntityManager:
+    """Менеджер сутностей який працює з всим а в основному формує логи які вказують зміни статусів.
+
+    Returns:
+        _type_: _description_
+    """
     
     class EBag:
         def __init__(self, camera_id) -> None:
@@ -1424,6 +1521,8 @@ class EntityManager:
                             
 
 class PairsManager:
+    """Менеджур пар який обробляє пари людей та має ключову функцію push_tracks яка формує спочатку пари потім повертає сутності.
+    """
     
     def __init__(self) -> None:
         self.human_ids = white_list_person
@@ -1444,6 +1543,14 @@ class PairsManager:
         self.locker = QMutexContextManager()
     
     def get_bags_and_humans_by_logs(self, logs):
+        """Отримання людей і сумок тих що вище описані по логах
+
+        Args:
+            logs (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         if len(logs) > 0:
             array_result = []
             for elem in logs:
@@ -1471,6 +1578,14 @@ class PairsManager:
         return None
     
     def get_bags_by_array_idx(self, bag_idx):
+        """Отримання сумок по масиву індексів 
+
+        Args:
+            bag_idx (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         if len(bag_idx) > 0:
             bags = []
             for elem_b in bag_idx:
@@ -1483,6 +1598,14 @@ class PairsManager:
         return None
     
     def get_humans_by_array_idx(self, human_idx):
+        """Отримання людей по масиву індексів
+
+        Args:
+            human_idx (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         if len(human_idx) > 0:
             humans = []
             for elem_h in human_idx:
@@ -1496,6 +1619,14 @@ class PairsManager:
     
     
     def find_human(self, id_human=-1):
+        """Пошук людини по ідентифікатору
+
+        Args:
+            id_human (int, optional): _description_. Defaults to -1.
+
+        Returns:
+            _type_: _description_
+        """
         for hone in self.humans:
             if isinstance(hone, Human):
                 if hone.human_id == id_human:
@@ -1503,6 +1634,14 @@ class PairsManager:
         return None 
     
     def find_bag(self, id_bag=-1):
+        """Пошук сумки по ідентифікатору
+
+        Args:
+            id_bag (int, optional): _description_. Defaults to -1.
+
+        Returns:
+            _type_: _description_
+        """
         for bone in self.bags:
             if isinstance(bone, Bag):
                 if bone.bag_id == id_bag:
@@ -1510,6 +1649,16 @@ class PairsManager:
         return None 
     
     def find_pair(self, id_camera=-1, id_human=-1, id_bag=-1):
+        """Пошук пари знаючи ідентифікатор камери людини і сумки
+
+        Args:
+            id_camera (int, optional): _description_. Defaults to -1.
+            id_human (int, optional): _description_. Defaults to -1.
+            id_bag (int, optional): _description_. Defaults to -1.
+
+        Returns:
+            _type_: _description_
+        """
         for pone in self.pairs:
             if isinstance(pone, Pair):
                 if pone.id_camera == id_camera:
@@ -1519,6 +1668,14 @@ class PairsManager:
         return None 
     
     def find_pair_on_other_cameras(self, id_current_camera=-1):
+        """Пошук пар інших камер а не теї що передана як ідентифікатор
+
+        Args:
+            id_current_camera (int, optional): _description_. Defaults to -1.
+
+        Returns:
+            _type_: _description_
+        """
         array_other = []
         for pone in self.pairs:
             if isinstance(pone, Pair):
@@ -1548,6 +1705,16 @@ class PairsManager:
                 bone.enable_one_camera(id_camera)
     
     def intersection_human(self, id_camera=-1, percent_area = pairs_manager_intersection_human_percent_area, delta_time_limit=intersection_human_delta_time_limit):
+        """Пошук перетинів у людей щоб потім мержити їх
+
+        Args:
+            id_camera (int, optional): _description_. Defaults to -1.
+            percent_area (_type_, optional): _description_. Defaults to pairs_manager_intersection_human_percent_area.
+            delta_time_limit (_type_, optional): _description_. Defaults to intersection_human_delta_time_limit.
+
+        Returns:
+            _type_: _description_
+        """
         result_intersection_human = []
         visited_pairs = set()
         for human1 in self.humans:
@@ -1604,6 +1771,16 @@ class PairsManager:
         return result_intersection_human                                   
     
     def intersection_bag(self, id_camera=-1, percent_area = pairs_manager_intersection_bag_percent_area, delta_time_limit=intersection_bag_delta_time_limit):
+        """Пошук перетинів сумок щоб мержити потім
+
+        Args:
+            id_camera (int, optional): _description_. Defaults to -1.
+            percent_area (_type_, optional): _description_. Defaults to pairs_manager_intersection_bag_percent_area.
+            delta_time_limit (_type_, optional): _description_. Defaults to intersection_bag_delta_time_limit.
+
+        Returns:
+            _type_: _description_
+        """
         result_intersection_bag = []
         visited_pairs = set()
         for bag1 in self.bags:
@@ -1613,10 +1790,7 @@ class PairsManager:
                     continue
                 if len(id1) > 0:
                     last_point1 = id1[-1][1][0]
-                    """original_ltwh1 = id1[-1][1][1]
                     
-                    if original_ltwh1 is None:
-                        continue"""
                     time1 =id1[-1][0]
                     for bag2 in self.bags:
                         if isinstance(bag2, Bag):
@@ -1626,10 +1800,6 @@ class PairsManager:
                             if len(id2) > 0:
                                 last_point2 = id2[-1][1][0] 
                                 
-                                """original_ltwh2 = id2[-1][1][1]
-                    
-                                if original_ltwh2 is None:
-                                    continue"""
                     
                                 time2 =id2[-1][0]
                                 
@@ -1674,6 +1844,15 @@ class PairsManager:
         return result_intersection_bag
     
     def find_other_pairs_pre(self, id_current_camera=-1, current_pairs=None):
+        """Пошук всіх пар що не належать тим що передані
+
+        Args:
+            id_current_camera (int, optional): _description_. Defaults to -1.
+            current_pairs (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
         result_pairs = []
         if current_pairs is not None and len(current_pairs) > 0:
             # Створюємо множину всіх ID пар у current_pairs для ефективного пошуку
@@ -1688,6 +1867,19 @@ class PairsManager:
         return result_pairs
 
     def test_pone(self, current_state, delta, its_new_pair, pone, limit_len, pair_on_other_cameras):
+        """Коли сформовано пари перевіряє за переданими параметрами пари чи додавти її чи ні до списку існуючих пар
+
+        Args:
+            current_state (_type_): _description_
+            delta (_type_): _description_
+            its_new_pair (_type_): _description_
+            pone (_type_): _description_
+            limit_len (_type_): _description_
+            pair_on_other_cameras (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         state_add = False
         if isinstance(pone, Pair):
             if isinstance(pone.bag, Bag) and isinstance(pone.human, Human):
@@ -1734,7 +1926,17 @@ class PairsManager:
         return array_real_pair
     
     def push_tracks(self, tracks, id_camera=-1, trackers_capacitor=None):
-        
+        """Основна функція обробки яка отримує треки і бокси та формує пари людей і сумок.
+        Повертає сутності.
+
+        Args:
+            tracks (_type_): _description_
+            id_camera (int, optional): _description_. Defaults to -1.
+            trackers_capacitor (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
         if trackers_capacitor is not None and isinstance(trackers_capacitor, TrackersCapacitor):
             
             with self.locker:
@@ -1792,86 +1994,6 @@ class PairsManager:
                             self.unions_bags[key] = rib 
                     pass
                     
-                """array_pair = []
-                for i, bag1 in enumerate(self.bags):
-                    if isinstance(bag1, Bag):
-                        bp = bag1.get_points(id_camera)
-                        if bp != None:
-                            if len(bp) > 0:
-                                last_point_bag = bp[-1][1][0]
-                                original_ltwh_1 = bp[-1][1][1]
-                                time1 = bp[-1][0]
-                                        
-                                if original_ltwh_1 is None:
-                                    continue
-                                
-                                for j, human1 in enumerate(self.humans):
-                                    if isinstance(human1, Human):
-                                        hp = human1.get_points(id_camera)
-                                        if hp != None:
-                                            if len(hp) > 0:
-                                                last_point_human = hp[-1][1][0]
-                                                original_ltwh_2 = hp[-1][1][1]
-                                                time2 = hp[-1][0]
-                                                
-                                                if original_ltwh_2 is None:
-                                                    continue
-                                                
-                                                delta_time_limit = push_tracks_delta_time_limit
-                                                delta_time = abs(time2 - time1)
-                                                state_2 = False
-                                                if delta_time != 0.0:
-                                                    #print(f"delta_time: {delta_time}")
-                                                    pass
-                                                
-                                                if delta_time < delta_time_limit:
-                                                    state_2 = True
-                                                pass 
-                                                
-                                                if state_2 is True:
-                                                    
-                                                    (circle_pb_last_x, circle_pb_last_y), circle_pb_last_radius = box_to_circle(last_point_bag)
-                                                    (circle_ph_last_x, circle_ph_last_y), circle_ph_last_radius = box_to_circle(last_point_human)
-                                                    
-                                                    state_in = circle_intersection_area(
-                                                        circle_pb_last_radius, 
-                                                        (circle_pb_last_x, circle_pb_last_y), 
-                                                        circle_ph_last_radius, 
-                                                        (circle_ph_last_x, circle_ph_last_y)
-                                                    )
-                                                    
-                                                    if state_in[1] > push_tracks_state_in_circle_intersection_area:
-                                                        state_in = 1
-                                                    else:
-                                                        state_in = 0    
-                                                        
-                                                    center1 = (int(((last_point_bag[0]) + (last_point_bag[2]))/2), 
-                                                                int(((last_point_bag[1]) + (last_point_bag[3]))/2))
-                                                    
-                                                    center2 = (int(((last_point_human[0]) + (last_point_human[2]))/2), 
-                                                                int(((last_point_human[1]) + (last_point_human[3]))/2))
-                                                    
-                                                    len_pp = distance_between_points(center1, center2)
-                                                    
-                                                    state_original = True 
-                                                    if state_in is True or state_in == 1:
-                                                        array_pair.append((
-                                                            i, 
-                                                            j, 
-                                                            len_pp, 
-                                                            last_point_bag, 
-                                                            last_point_human, 
-                                                            bag1.det_class, 
-                                                            human1.det_class,
-                                                            state_in,
-                                                            bag1,
-                                                            human1,
-                                                            state_original
-                                                        ))
-                                        else:
-                                            pass
-                        else:
-                            pass  """
                 
                 array_pair = []
                 for i, bag1 in enumerate(self.bags):
@@ -2225,6 +2347,18 @@ class PairsManager:
         
         
 def compare_arrays(camera_id, pman, eman, array_current, array_all):
+    """Функція викликається із обробника та повертає логи людей і сумки та список всіх разом
+
+    Args:
+        camera_id (_type_): _description_
+        pman (_type_): _description_
+        eman (_type_): _description_
+        array_current (_type_): _description_
+        array_all (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     if isinstance(eman, EntityManager) and isinstance(pman, PairsManager):
         logs = eman.update(camera_id, array_current, array_all, pman, eman)   
         humans_and_bags = pman.get_bags_and_humans_by_logs(logs)
