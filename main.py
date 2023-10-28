@@ -772,6 +772,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return None 
     
     def find_available_camera_widget(self, index, all_widgets):
+        """Шукає віджет контролю по індексу
+
+        Args:
+            index (_type_): _description_
+            all_widgets (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         for i, wi in enumerate(all_widgets):
             if isinstance(wi, AvailableCameraWidget):
                 if wi.get_index() == index:
@@ -779,6 +788,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return False 
 
     def find_cameras_button_f(self):
+        """Пошук камер за кнопкою і додавання їх у список 
+        """
         cameras = find_all_cameras()
         new_camera_index = []
         all_widgets = []
@@ -814,18 +825,36 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             msgBox.show()
     
     def remove_camera_uncheck(self, index_remove):
+        """Видалення камери якщо знімається обробляти
+
+        Args:
+            index_remove (_type_): _description_
+        """
         widget = self.find_widget_on_camera(index_remove)
         if widget is not None:
             self.verticalLayout_2.removeWidget(widget)
             widget.deleteLater()
     
     def create_camera_check(self, index_create):
+        """Створює камеру якщо вибирається обробляти якщо перед тим було зняти обробляти
+
+        Args:
+            index_create (_type_): _description_
+        """
         camera_widget = CameraWidgetView(self.get_new_id_worker())
         camera_widget.create_connect_online(index_create)
         camera_widget.frame_data.connect(self.do_work_frame_data)
         self.verticalLayout_2.addWidget(camera_widget)
     
     def find_widget_on_is_file(self, file_path):
+        """Пошук віджету що обробляє із файлу
+
+        Args:
+            file_path (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         for i in range(self.verticalLayout_2.count()):
             widget_item = self.verticalLayout_2.itemAt(i)
             widget = widget_item.widget()
@@ -835,18 +864,23 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         return widget
         return None 
     
-    """def show_processing_result(self, file_path, state):
-        widget = self.find_widget_on_is_file(file_path)
-        if widget is not None:
-            widget.update_show_processing_result(state)
-                    """
     def loop_video_file(self, file_path, state):
+        """Змінює стан циклу обробки із файлу привиборі або знятті
+
+        Args:
+            file_path (_type_): _description_
+            state (_type_): _description_
+        """
         widget = self.find_widget_on_is_file(file_path)
         if widget is not None:
             widget.update_loop(state)
     
-    
     def remove_camera_uncheck_is_file(self, file_path):
+        """Видаляє віджет обробки із файлу якщо зняли прапор обробляти
+
+        Args:
+            file_path (_type_): _description_
+        """
         widget = self.find_widget_on_is_file(file_path)
         if widget is not None:
             widget.stop()
@@ -854,7 +888,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             widget.deleteLater()
                 
     def create_camera_check_is_file(self, file_path):
-        
+        """Створює віджет обробки із файлу при виборі обробляти
+
+        Args:
+            file_path (_type_): _description_
+        """
         camera_widget = CameraWidgetViewIsFile(self.get_new_id_worker())
         camera_widget.frame_data.connect(self.do_work_frame_data)
         camera_widget.create_file_stream(file_path)

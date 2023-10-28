@@ -23,6 +23,14 @@ from config import create_basic_tracker_deepsort_embedder_gpu
 from PyQt5.QtCore import QMutex
 
 def to_list(elem):
+    """Функція перетворює вхідний елемент в список
+
+    Args:
+        elem (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     arr = []
     if isinstance(elem, str):
         arr = [int(el) for el in elem.split(" ")]
@@ -44,6 +52,15 @@ def to_list(elem):
     return arr
 
 def test_multy_issubset(a, b):
+    """Аналіз двох множин чи мають перетин 
+
+    Args:
+        a (_type_): _description_
+        b (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     a = to_list(a)
     b = to_list(b)
     a = set(a)
@@ -52,41 +69,44 @@ def test_multy_issubset(a, b):
     
 
 def distance_between_points(point1, point2):
+    """Вираховує відстань між двома точками 
+
+    Args:
+        point1 (_type_): _description_
+        point2 (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     x1, y1 = point1
     x2, y2 = point2
     distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
     return distance
 
-def weighted_average(values):
-    n = len(values)
-    weights = [i + 1 for i in range(n)]
-    total_weight = sum(weights)
-    
-    weighted_sum = sum(val * weight for val, weight in zip(values, weights))
-    
-    weighted_avg = weighted_sum / total_weight
-    return weighted_avg
-
-def dst_k(points_baggage, points_human):
-    all_sum = 0.0
-    for pb in points_baggage:
-        pb = pb[1]
-        
-        for ph in points_human:
-            ph = ph[1]
-            
-            all_sum += (pb[0] - ph[0])**2 + (pb[1] - ph[1])**2
-
-    return math.sqrt(all_sum) / len(points_baggage) + len(points_human)
-
 def get_mean_points(points_baggage, points_human):
+    """Рахує відстань між двома точками
+
+    Args:
+        points_baggage (_type_): _description_
+        points_human (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     pb = points_baggage[-1][1]
     ph = points_human[-1][1]
     len_pp = distance_between_points(pb, ph)
-    #len_pp = dst_k(points_baggage, points_human)
     return len_pp, pb, ph
 
 def ltrb_to_ltwh(ltrb):
+    """Конвертує бокс ліво верх право низ в ліво верх ширина висота
+
+    Args:
+        ltrb (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     left, top, right, bottom = ltrb[0], ltrb[1], ltrb[2], ltrb[3]
     width = right - left
     height = bottom - top
@@ -94,6 +114,14 @@ def ltrb_to_ltwh(ltrb):
     return ltwh
 
 def ltwh_to_ltrb(ltwh):
+    """Конвертує бокс ліво верх ширина висота в ліво верх право низ
+
+    Args:
+        ltwh (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     left, top, width, height = ltwh[0], ltwh[1], ltwh[2], ltwh[3]
     right = left + width
     bottom = top + height
@@ -101,6 +129,15 @@ def ltwh_to_ltrb(ltwh):
     return ltrb
 
 def calculate_intersection_area_ltwh(ltwh1, ltwh2):
+    """Рахує відсоток перетину двох боксів ліво верх ширина висота
+
+    Args:
+        ltwh1 (_type_): _description_
+        ltwh2 (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     left1, top1, width1, height1 = ltwh1[0], ltwh1[1], ltwh1[2], ltwh1[3]
     left2, top2, width2, height2 = ltwh2[0], ltwh2[1], ltwh2[2], ltwh2[3]
     
@@ -119,6 +156,15 @@ def calculate_intersection_area_ltwh(ltwh1, ltwh2):
     return intersection_percentage
 
 def calculate_intersection_area_ltrb(ltrb1, ltrb2):
+    """Рахує відсоток перетину двох боксів ліво верх право низ
+
+    Args:
+        ltrb1 (_type_): _description_
+        ltrb2 (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     left1, top1, right1, bottom1 = ltrb1[0], ltrb1[1], ltrb1[2], ltrb1[3]
     left2, top2, right2, bottom2 = ltrb2[0], ltrb2[1], ltrb2[2], ltrb2[3]
     
@@ -132,6 +178,21 @@ def calculate_intersection_area_ltrb(ltrb1, ltrb2):
     return intersection_percentage
 
 def resize_with_aspect_ratio(image, new_width=None, new_height=None):
+    """Змінює розмір зображення згідно тільки висоти або тільки ширині пропорційно відповідно ширині і висоті
+    але можна вказувати тільки або висоту нову або нову ширину 
+
+    Args:
+        image (_type_): _description_
+        new_width (_type_, optional): _description_. Defaults to None.
+        new_height (_type_, optional): _description_. Defaults to None.
+
+    Raises:
+        ValueError: _description_
+        ValueError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     if new_width is None and new_height is None:
         raise ValueError("At least one of 'new_width' or 'new_height' must be provided.")
     
@@ -149,6 +210,14 @@ def resize_with_aspect_ratio(image, new_width=None, new_height=None):
     return resized_image
 
 def box_to_circle(ltrb_box):
+    """Рахує із боксу ліво верх право низ круг з центром і радіусом
+
+    Args:
+        ltrb_box (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     left, top, right, bottom = ltrb_box[0],ltrb_box[1],ltrb_box[2],ltrb_box[3]
     center_x = (left + right) / 2
     center_y = (top + bottom) / 2
@@ -159,11 +228,29 @@ def box_to_circle(ltrb_box):
     return (int(center_x), int(center_y)), int(radius)
 
 def is_box_inside(box, main_box):
+    """Перевіряє чи бокс всередині іншого
+
+    Args:
+        box (_type_): _description_
+        main_box (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     x1, y1, x2, y2 = box[0], box[1], box[2], box[3]
     mx1, my1, mx2, my2 = main_box[0], main_box[1], main_box[2], main_box[3]
     return mx1 <= x1 and mx2 >= x2 and my1 <= y1 and my2 >= y2
 
 def check_box_relationship(box1, box2):
+    """Рахує чи бокс всередині іншого для обох і вказує який в якому
+
+    Args:
+        box1 (_type_): _description_
+        box2 (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     if is_box_inside(box1, box2):
         return (True, 2)
     elif is_box_inside(box2, box1):
@@ -204,6 +291,22 @@ def circle_intersection(c1, c2, r1, r2):
         return (c1[0] + x * (c2[0] - c1[0]), c1[1] + y * (c2[1] - c1[1]))
 
 def exponential_moving_average(data, alpha):
+    """
+    Експоненційне рухоме середнє (EMA) - це важливий показник в аналізі
+    часових рядів та статистиці. 
+    Він використовується для згладжування даних та виділення трендів, а 
+    також для передбачення майбутніх значень на основі минулих спостережень. 
+    EMA є модифікацією простого рухомого середнього (SMA), але відрізняється
+    від нього використанням вагових коефіцієнтів, які надають більшу вагу 
+    недавним даним.
+
+    Args:
+        data (_type_): _description_
+        alpha (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     ema = [data[0]]
     for value in data[1:]:
         smoothed_value = alpha * value + (1 - alpha) * ema[-1]
@@ -211,6 +314,16 @@ def exponential_moving_average(data, alpha):
     return ema
 
 def get_min_len_human_baggage(points, unions, dict_indexs):
+    """Шукає пари людина сумка з мінімальною відстаню
+
+    Args:
+        points (_type_): _description_
+        unions (_type_): _description_
+        dict_indexs (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     array_pair = []
     for i, point in enumerate(points):
         if len(point) > 0:
@@ -295,6 +408,17 @@ def get_min_len_human_baggage(points, unions, dict_indexs):
     return r2
 
 def circle_intersection_area(radius1, center1, radius2, center2):
+    """Визначає перетин двох кол з центром і радіусом в вигляді площі і відсотку
+
+    Args:
+        radius1 (_type_): _description_
+        center1 (_type_): _description_
+        radius2 (_type_): _description_
+        center2 (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     d = math.sqrt((center1[0] - center2[0]) ** 2 + (center1[1] - center2[1]) ** 2)
 
     if d >= radius1 + radius2:
@@ -317,6 +441,16 @@ def circle_intersection_area(radius1, center1, radius2, center2):
         return intersection_area, percentage_intersection
 
 def circle_bbox_intersection_area_percentage(circle_radius, circle_center, ltrb_bbox):
+    """Визнаає перетин між колом з центом і радіусом та боксом ліво верх і право низ
+
+    Args:
+        circle_radius (_type_): _description_
+        circle_center (_type_): _description_
+        ltrb_bbox (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     circle_x, circle_y = circle_center
     left, top, right, bottom = ltrb_bbox
 
@@ -350,6 +484,8 @@ def circle_bbox_intersection_area_percentage(circle_radius, circle_center, ltrb_
         return 0
 
 class QMutexContextManager:
+    """Контекстний менеджер який викликає блокування свого мотексу при використанні
+    """
     def __init__(self):
         self.mutex = QMutex()
 
@@ -368,6 +504,8 @@ class QMutexContextManager:
 
 
 class TrackersCapacitor:
+    """Тримає і видає індекси та трекери на камери
+    """
     def __init__(self):
         self.trackers = {}
         self.already_created_index_human = {}
