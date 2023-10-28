@@ -1713,7 +1713,14 @@ class PairsManager:
             delta_time_limit (_type_, optional): _description_. Defaults to intersection_human_delta_time_limit.
 
         Returns:
-            _type_: _description_
+            _type_: result_intersection_human.append((
+                        (human1.human_id, human2.human_id),
+                        last_point1, 
+                        last_point2, 
+                        percentage_intersection, 
+                        cb,
+                        (human1, human2)
+                    ))
         """
         result_intersection_human = []
         visited_pairs = set()
@@ -1779,7 +1786,14 @@ class PairsManager:
             delta_time_limit (_type_, optional): _description_. Defaults to intersection_bag_delta_time_limit.
 
         Returns:
-            _type_: _description_
+            _type_: result_intersection_bag.append((
+                        (bag1.bag_id, bag2.bag_id), 
+                        last_point1, 
+                        last_point2, 
+                        a, 
+                        cb,
+                        (bag1, bag2)
+                    ))
         """
         result_intersection_bag = []
         visited_pairs = set()
@@ -1941,6 +1955,7 @@ class PairsManager:
             
             with self.locker:
                 
+                """Прохід по списку треків де є як люди так і сумки які визначаються і створюються"""
                 for track in tracks:
                     if track.is_confirmed() is False or track.time_since_update > 1:
                         continue
@@ -1973,14 +1988,14 @@ class PairsManager:
                         else:
                             b.append(id_camera, (bbox, original_ltwh))
                 
-                
+                """Кажемо яка зараз камера обробляється"""
                 self.enable_track_camera_id(id_camera)
-                
+                """Шукаємо перетини в людей"""
                 result_intersection_human = self.intersection_human(id_camera)
-                
+                """Шукаємо перетини в сумок"""
                 result_intersection_bag = self.intersection_bag(id_camera)
                 
-                #щоб дублі видалити
+                #щоб дублі видалити проходимось по всім і порівнюємо згідно відсоткового перетину за індексом 3
                 if len(result_intersection_human) > 0 or len(result_intersection_bag) > 0:
 
                     for rih in result_intersection_human:
@@ -1994,7 +2009,7 @@ class PairsManager:
                             self.unions_bags[key] = rib 
                     pass
                     
-                
+                """Об'єднаний алгоритм пошуку пар, об'єднаний через те що відсіч об'єктів іде по принципу самозапитування всіх"""
                 array_pair = []
                 for i, bag1 in enumerate(self.bags):
                     if isinstance(bag1, Bag):
@@ -2079,7 +2094,7 @@ class PairsManager:
                     pass
                 
                 result = []
-                
+                """Повторна пост фільтрація по відстані"""
                 for i, pair_m in enumerate(array_pair):
                     state_add = True
                     bag_m = pair_m[8]
@@ -2088,9 +2103,9 @@ class PairsManager:
                             bag_other = pair_other[8]
                             if isinstance(bag_other, Bag):
                                 if bag_m.bag_id == bag_other.bag_id:
-                                        if pair_m[2] > pair_other[2]:
-                                            state_add = False 
-                                            break 
+                                    if pair_m[2] > pair_other[2]:
+                                        state_add = False 
+                                        break 
                     if state_add is True:
                         result.append(pair_m)
                 
@@ -2103,7 +2118,9 @@ class PairsManager:
                 visited = set()  # Множина для відстеження вже відвіданих пар
 
                 result = []  # Результат
-
+                """Оптимізована форма пошуку пар яка працює також з дублями і присіває групив форми змішаного змісту 
+                які не виключають структури підвищеної помилки яка в свою чергу можуть непряме приєднання але в більшості 
+                така форма аналізу буде більш ефективна ніж однослойний зріз"""
                 for i in range(len(array_pair)):
                     if i not in visited:  # Якщо цю пару ще не відвідували
                         current_pair = array_pair[i]
@@ -2140,6 +2157,7 @@ class PairsManager:
 
                 array_pair = list(unique_data.values())
                 
+                """Далі свторення самих пар яке і використовує форми попередньої обробки"""
                 
                 #якщо пара є оновити інакше створити 
                 pair_on_other_cameras = self.find_pair_on_other_cameras(id_camera)
@@ -2206,6 +2224,8 @@ class PairsManager:
                     pass
                 
                 pass
+                
+                """Далі іде обробка перетинів і додавання в форму груп"""
                 
                 for one_intersect in result_intersection_human:
                     curr_key = one_intersect[0]
