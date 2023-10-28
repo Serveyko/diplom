@@ -2200,6 +2200,8 @@ class PairsManager:
                 if len(array_pair_pre) > 0:
                     pass
                 
+                """Оновлення пар що втратили перетин і якщо вони знову його почали мати додаємо в масив пар"""
+                
                 for pone in array_pair_pre:
                     if isinstance(pone, Pair):
                         its_new_pair = False
@@ -2270,7 +2272,8 @@ class PairsManager:
                         self.bags_groups.append([one_intersect[5][0], one_intersect[5][1]])
 
                 pass
-
+                
+                """Якщо неіснує груп то створити із одним елементом людиною або сумкою"""
                 for one_human_glob in self.humans:
                     if isinstance(one_human_glob, Human):
                         curr_key = one_human_glob.human_id
@@ -2301,6 +2304,7 @@ class PairsManager:
                 
                 pass
                 
+                """Якщо по групі ще не існує сутності тоді створюємо нову сутність по групі"""
                 for one_group in self.human_groups:
                     if len(self.human_groups) > 1:
                         pass
@@ -2329,7 +2333,7 @@ class PairsManager:
                                     finded_entity.push_human(one_elem_group)
 
                 pass
-                
+                """Йдемо по масиву пар і якщо є спільне то закидаємо пару в сутність"""
                 for one_pair in array_mod:
                     if isinstance(one_pair, Pair):
                         if isinstance(one_pair.bag, Bag) and isinstance(one_pair.human, Human): 
