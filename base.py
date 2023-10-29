@@ -2,6 +2,9 @@ from frame_data import FrameData
 
 
 class FrameDataContainer:
+    """Складує фрейми і слугує для них своєрідним контейнером який тримає їх в собі 
+    а також дозволяє отримувати лімітовану кількість
+    """
     def __init__(self) -> None:
         self.containers = {}
     

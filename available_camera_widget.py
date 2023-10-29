@@ -5,6 +5,15 @@ from available_camera import Ui_Form as AvailableCameraWidgetImport
 from available_camera_gen_idx import available_camera_gen_idx_elem
 
 class AvailableCameraWidget(QWidget, AvailableCameraWidgetImport):
+    """Віджет контролю який дає можливість контролювати камеру яка була знайдена
+
+    Args:
+        QWidget (_type_): _description_
+        AvailableCameraWidgetImport (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     deleteWidgetSignal = pyqtSignal(int)
     createWidgetSignal = pyqtSignal(int)
     

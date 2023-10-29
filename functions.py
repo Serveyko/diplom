@@ -5,6 +5,11 @@ import traceback
 from datetime import datetime
 
 def find_all_cameras():
+    """Функція пошуку камер на компютері
+
+    Returns:
+        _type_: _description_
+    """
     index = 0
     all_cameras = []
 
@@ -20,6 +25,21 @@ def find_all_cameras():
     return all_cameras
 
 def resize_with_aspect_ratio(image, new_width=None, new_height=None):
+    """Отримує зображення і змінює йому розмір пропорційно невказаній одиниці висоті або ширині відповідно до вказаних
+    але підтримує тільки вказування або тільки ширини нової або висоти нової
+
+    Args:
+        image (_type_): _description_
+        new_width (_type_, optional): _description_. Defaults to None.
+        new_height (_type_, optional): _description_. Defaults to None.
+
+    Raises:
+        ValueError: _description_
+        ValueError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     if new_width is None and new_height is None:
         raise ValueError(
             "At least one of 'new_width' or 'new_height' must be provided."
@@ -39,6 +59,15 @@ def resize_with_aspect_ratio(image, new_width=None, new_height=None):
     return resized_image
 
 def get_object_names_with_indices(class_indices, class_names):
+    """По індексах отримує необхідне значення
+
+    Args:
+        class_indices (_type_): _description_
+        class_names (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     result = []
     for i, index in enumerate(class_indices):
         class_name = class_names.get(int(index), 'Unknown')
@@ -47,6 +76,16 @@ def get_object_names_with_indices(class_indices, class_names):
 
     
 def overlay_image_on_black_bg(overlay, bg_width, bg_height):
+    """Накладає зображення на чорний фон при вказаній ширині і висоті фону
+
+    Args:
+        overlay (_type_): _description_
+        bg_width (_type_): _description_
+        bg_height (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # Створення чорного фону з вказаними розмірами
     black_background = np.zeros((bg_height, bg_width, 3), dtype=np.uint8)
 
@@ -78,6 +117,11 @@ def overlay_image_on_black_bg(overlay, bg_width, bg_height):
 
 
 def print_exception_info(ex):
+    """Зручно виводить помилку
+
+    Args:
+        ex (_type_): _description_
+    """
     if isinstance(ex, Exception):
         # Отримуємо всю інформацію про виняток, включаючи рядок та повідомлення
         exception_type = type(ex).__name__  # Тип винятка
@@ -98,7 +142,14 @@ def print_exception_info(ex):
         print("Вхідний об'єкт не є об'єктом Exception")
 
 def time_time_to_formatted_time(timestamp):
-    
+    """Конвертує мітку часу в зручний формат який можна прочитати
+
+    Args:
+        timestamp (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # Перетворюємо час з секунд у об'єкт datetime
     datetime_obj = datetime.fromtimestamp(timestamp)
 

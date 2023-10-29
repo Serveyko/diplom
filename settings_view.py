@@ -10,6 +10,11 @@ from db import load_all_params_settings, session, params_dict, save_one_params_s
 from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout
 
 class ParamWidget(QWidget):
+    """Віджет параметру який показує параметер і обробляє різні типи параметрів
+
+    Args:
+        QWidget (_type_): _description_
+    """
     def __init__(self, parent=None):
         super(ParamWidget, self).__init__(parent)
         self.label = QLabel(self)
@@ -67,7 +72,12 @@ class ParamWidget(QWidget):
         return (self.label.text(), val)
 
 class SettingsView(QWidget, Settings_ui_Form):
+    """Віджет налаштувань який створює вікно в якому можна налаштовувати різні параметри
 
+    Args:
+        QWidget (_type_): _description_
+        Settings_ui_Form (_type_): _description_
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)

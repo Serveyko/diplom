@@ -9,6 +9,14 @@ from deepface import DeepFace
 from config import deepface_detector_backend
 
 def exstract_faces(image):
+    """Іитягує обличчя із зображення
+
+    Args:
+        image (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     obj_find = None
     try:
         obj_find = DeepFace.extract_faces(
@@ -21,12 +29,21 @@ def exstract_faces(image):
     return obj_find
 
 def verify_faces(image1, image2) -> bool:
+    """Отримує два зображення обличь і повертає вердик чи то є одне обличчя чи різні
+
+    Args:
+        image1 (_type_): _description_
+        image2 (_type_): _description_
+
+    Returns:
+        bool: _description_
+    """
     try:
         result = DeepFace.verify(img1_path = image1, img2_path = image2, detector_backend = deepface_detector_backend)
         if isinstance(result, dict):
-            #print("""BEFORE""") 
+            #print("BEFORE") 
             #[print(f"   {val}: {result[val]}") for val in result.keys()]
-            #print("""AFTER""")
+            #print("AFTER")
             return result["verified"]
     finally:
         pass 

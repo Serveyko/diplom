@@ -12,6 +12,11 @@ from PyQt5.QtWidgets import QMessageBox
 
           
 class ImageDisplayWidget(QWidget):
+    """Віджет показу зображень із кнопками і перемиканнями
+
+    Args:
+        QWidget (_type_): _description_
+    """
     imageClosed = pyqtSignal()
 
     def __init__(self, image_arrays, parent=None):
@@ -103,6 +108,11 @@ class ImageDisplayWidget(QWidget):
 
 
 class HoverLabel(QLabel):
+    """Лейб який треба натискати і буде показано зображення 
+
+    Args:
+        QLabel (_type_): _description_
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumSize(50, 50)
@@ -139,6 +149,8 @@ class HoverLabel(QLabel):
         self.image_shown = False
 
 class CustomWidgetSingleHumanCapacitor:
+    """Клас дає нові індекси для віджетів людей
+    """
     def __init__(self):
         self.already_created_index = {} 
     
@@ -151,7 +163,14 @@ class CustomWidgetSingleHumanCapacitor:
 custom_widget_single_human_capacitor = CustomWidgetSingleHumanCapacitor()
 
 class CustomWidgetSingleHuman(QWidget):
-    
+    """Віджет людини який показує його дані і фотографії
+
+    Args:
+        QWidget (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     delete_signal = pyqtSignal(int)
     
     def __init__(self):

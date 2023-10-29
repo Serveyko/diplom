@@ -3,12 +3,19 @@ from datetime import datetime
 global_id_frame_data = 0
 
 def get_new_id_frame_data():
+    """Видає індекси
+
+    Returns:
+        _type_: _description_
+    """
     global global_id_frame_data
     c = global_id_frame_data
     global_id_frame_data += 1
     return c
 
 class FrameData:
+    """Клас що дає зручний інтерфейс передачі фреймів між компонентами програми
+    """
     def __init__(self) -> None:
         self.id_worker = -1
         self.name = ""

@@ -1,3 +1,4 @@
+#ruff: noqa: E501
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import pyqtSignal
@@ -14,6 +15,13 @@ from function_caller_thread import FunctionCallerThread
 from functions import print_exception_info
 
 class CameraWidgetViewIsFile(QWidget, CameraWidgetIsFileImport):
+    """Віджет що працює з відео файлом обробляючи їх що дозволяє закидати 
+    файли відео і отримувати потік фреймів оброблених детектором.
+
+    Args:
+        QWidget (_type_): _description_
+        CameraWidgetIsFileImport (_type_): _description_
+    """
     frame_data = pyqtSignal(FrameData)
     
     def __init__(self, inid):
@@ -30,6 +38,12 @@ class CameraWidgetViewIsFile(QWidget, CameraWidgetIsFileImport):
         self.dataframe_uid = get_new_id_frame_data()
 
     def create_file_stream(self, file_path, loop=True):
+        """Створює потік відео який читає відео і дозволяє отримувати потік фреймів.
+        Також запускає таймер.
+        Args:
+            file_path (_type_): _description_
+            loop (bool, optional): _description_. Defaults to True.
+        """
         self.file_path = file_path
         self.video_stream = cv2.VideoCapture(file_path)
         
@@ -41,6 +55,9 @@ class CameraWidgetViewIsFile(QWidget, CameraWidgetIsFileImport):
         self.label_2.setText(self.file_path)
     
     def update_frame(self):
+        """Основна функція оновлення яка обробляє фрейми із 
+        таймеру який може бути як таймером так і потоком реальним
+        """
         with self.pt_time:
             ret, frame = self.video_stream.read()
             if ret:
@@ -81,22 +98,14 @@ class CameraWidgetViewIsFile(QWidget, CameraWidgetIsFileImport):
                 else:
                     self.pt_time.stop()
             
-    
-    def update_show_processing_result(self, show_processing_result_state):
-        self.show_processing_result = show_processing_result_state
-    
     def update_loop(self, loop_state):
-        #before = self.is_looping
+        """Оновлює стан зациклення потоку
+
+        Args:
+            loop_state (_type_): _description_
+        """
         self.is_looping = loop_state
-        """if before is False and self.is_looping is True:
-            self.video_stream.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
-            self.pt_time.set_time_interval(timeout_is_file_widget)
-            self.pt_time.start()
-            
-        elif before is True and self.is_looping is False:
-
-            self.pt_time.stop()"""
     
     def stop(self):
         try:

@@ -20,6 +20,15 @@ def find(
     frame: FrameData, 
     device='cpu'
     ):
+    """Основна функція детектування через модель yolov8
+
+    Args:
+        frame (FrameData): _description_
+        device (str, optional): _description_. Defaults to 'cpu'.
+
+    Returns:
+        _type_: _description_
+    """
     data_frame = frame.get_frame()
     if data_frame is not None:
         frame_height, frame_width, channels = data_frame.shape
@@ -37,10 +46,10 @@ def find(
             cls_boxes = boxes.cls
             ci = get_object_names_with_indices(cls_boxes, names2)
             annotated_frame = result.plot()  
-            """annotated_frame = resize_with_aspect_ratio(
+            annotated_frame = resize_with_aspect_ratio(
                 annotated_frame, 
                 new_width=resize_with_width
-            )"""
+            )
         
         frame.real_frame = real_frame
         frame.yolov8 = result
@@ -198,7 +207,7 @@ def find(
         
         if logs is not None:
             for single_log in logs:
-                if isinstance(single_log, EntityManager.ELog ):
+                if isinstance(single_log, EntityManager.ELog):
                     single_log.camera_id = dataframe_uid
                     
         

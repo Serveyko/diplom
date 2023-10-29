@@ -13,6 +13,11 @@ from functions import overlay_image_on_black_bg
 
           
 class ImageDisplayWidget(QWidget):
+    """Показує зображення
+
+    Args:
+        QWidget (_type_): _description_
+    """
     imageClosed = pyqtSignal()
 
     def __init__(self, image_arrays, parent=None):
@@ -102,6 +107,12 @@ class ImageDisplayWidget(QWidget):
         self.imageClosed.emit()
 
 class CreateHumanView(QWidget, Ui_Form):
+    """Свторює віджет де вибираємо лиця і вводимо назву щоб сворити людину
+
+    Args:
+        QWidget (_type_): _description_
+        Ui_Form (_type_): _description_
+    """
     image_push = pyqtSignal(list, str)
     
     def __init__(self, parent=None):

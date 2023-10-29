@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, PickleType
 
+"""Підключнн ядо бази дани"""
 database_url = 'sqlite:///people_logs_photos.db'
 
 # Створення з'єднання з базою даних SQLite
@@ -12,8 +13,8 @@ engine = create_engine(database_url)
 # Створення базового класу для визначення моделі
 Base = declarative_base()
 
-
 class Human(Base):
+    """Оголошення людини яка буде вже в таблицях через sqlalchemy"""
     __tablename__ = 'humans'
 
     id = Column(Integer, primary_key=True)
@@ -22,8 +23,10 @@ class Human(Base):
     log_images = Column(PickleType)
     idx = Column(PickleType)
 
+
 class HumanDB:
-    
+    """Ця людина не лежить в базі але зберігає дані що потім копіюються в бд
+    """
     def __init__(self) -> None:
         self.images_face = []
         self.log_images = []
@@ -34,6 +37,7 @@ class HumanDB:
     
 
 class Parameter(Base):
+    """Це представлення параметру налаштувань так як всі параметри лежать в бд"""
     __tablename__ = 'parameters'
 
     id = Column(Integer, primary_key=True)
@@ -49,11 +53,12 @@ class Parameter(Base):
     def __str__(self):
         return f"Parameter(name='{self.name}', original_value='{self.original_value}', current_value='{self.current_value}')"
 
-
+"""Створення всього в бд і створення сесії підключення"""
 Base.metadata.create_all(engine)
 SessionM = sessionmaker(bind=engine)
 session = SessionM()
 
+"""Далі функції роботи з бд додавання людини завантаження та видалення"""
 def add_human_to_db(session, name, images_face, log_images, idx, db_id):
     human_to_delete = session.query(Human).filter_by(id=db_id).first()
     if human_to_delete:
@@ -74,6 +79,7 @@ def delete_human_from_db(session, db_id):
         session.delete(human_to_delete)
         session.commit()
 
+"""Далі описано параметри по замовчанню і всі вони є основою для бд"""
 params_dict = {
     'yolov8_detect_model_path': r"yolov8n.pt",
     'main_process_timer_timestep': 300,
@@ -113,6 +119,14 @@ params_dict = {
 }
 
 def save_one_params_settings(session, param_name, original_value, current_value):
+    """Збереження параметру із налаштувань
+
+    Args:
+        session (_type_): _description_
+        param_name (_type_): _description_
+        original_value (_type_): _description_
+        current_value (_type_): _description_
+    """
     param = None
     param = session.query(Parameter).filter_by(name=param_name).first()
     if param and isinstance(param, Parameter):
@@ -127,12 +141,27 @@ def save_one_params_settings(session, param_name, original_value, current_value)
         session.commit()
 
 def save_params_settings(session, params_dict: dict={}):
+    """Це всі параметри зберігає
+
+    Args:
+        session (_type_): _description_
+        params_dict (dict, optional): _description_. Defaults to {}.
+    """
     for elem in params_dict.keys():
         param = Parameter(name=elem, original_value=params_dict[elem])
         session.add(param)
         session.commit()
 
 def load_all_params_settings(session, params_to_load:dict={}):
+    """Це завантажує всі параметри із бд
+
+    Args:
+        session (_type_): _description_
+        params_to_load (dict, optional): _description_. Defaults to {}.
+
+    Returns:
+        _type_: _description_
+    """
     loaded_params = []
     for param_name in params_to_load.keys():
         param = session.query(Parameter).filter_by(name=param_name).first()
@@ -141,6 +170,15 @@ def load_all_params_settings(session, params_to_load:dict={}):
     return loaded_params
 
 def start_load_save_params(session, params_to_load:dict={}):
+    """Ця функція вантажить і повертає всі параметри але якщо йог немає в бд то створює
+
+    Args:
+        session (_type_): _description_
+        params_to_load (dict, optional): _description_. Defaults to {}.
+
+    Returns:
+        _type_: _description_
+    """
     loaded_params = []
     for param_name in params_to_load.keys():
         param = session.query(Parameter).filter_by(name=param_name).first()

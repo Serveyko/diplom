@@ -83,6 +83,8 @@ create_basic_tracker_deepsort_embedder_gpu=False
 
 
 def load_all_config():
+    """Ця функція вантажить всі параметри в конфіг
+    """
     global yolov8_detect_model_path
     global main_process_timer_timestep
     global main_process_timer_small_timestep

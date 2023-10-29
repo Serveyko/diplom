@@ -1,3 +1,4 @@
+#ruff: noqa: E501
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import pyqtSignal
@@ -12,7 +13,13 @@ from config import timeout_widget, standart_width, standart_height
 from function_caller_thread import FunctionCallerThread
 
 class CameraWidgetView(QWidget, CameraWidgetImport):
-    
+    """Віджет камери який створює показ камери при обробці а 
+    також обробляє її викдаючи потім в основу оброблені фрейми
+
+    Args:
+        QWidget (_type_): _description_
+        CameraWidgetImport (_type_): _description_
+    """ 
     frame_data = pyqtSignal(FrameData)
     
     def __init__(self, inid):
@@ -27,6 +34,11 @@ class CameraWidgetView(QWidget, CameraWidgetImport):
         self.dataframe_uid = get_new_id_frame_data()
 
     def create_connect_online(self, index_camera):
+        """Створює потік фреймів із камери і запускає таймер обробки.
+
+        Args:
+            index_camera (_type_): _description_
+        """
         self.index_camera = index_camera
         self.camera = cv2.VideoCapture(index_camera)
         
@@ -37,6 +49,9 @@ class CameraWidgetView(QWidget, CameraWidgetImport):
         self.label_2.setText(f"Camera: {self.index_camera}")
     
     def update_frame(self):
+        """Основна функція оновлення яка обробляє фрейми із 
+        таймеру який може бути як таймером так і потоком реальним
+        """
         with self.pt_time:
             ret, frame = self.camera.read()
             if ret:

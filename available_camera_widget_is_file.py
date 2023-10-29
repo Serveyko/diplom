@@ -6,10 +6,17 @@ from available_camera_is_file import Ui_Form as AvailableCameraIsFileWidgetImpor
 from available_camera_gen_idx import available_camera_gen_idx_elem
 
 class AvailableCameraWidgetIsFile(QWidget, AvailableCameraIsFileWidgetImport):
+    """Віджет контролю відео із файлу і його обробку а також зациклення
+
+    Args:
+        QWidget (_type_): _description_
+        AvailableCameraIsFileWidgetImport (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     deleteWidgetSignal = pyqtSignal(str)
     createWidgetSignal = pyqtSignal(str)
-    
-    #show_processing_result_Signal = pyqtSignal(str, bool)
 
     loop_Signal = pyqtSignal(str, bool)
     
@@ -22,18 +29,9 @@ class AvailableCameraWidgetIsFile(QWidget, AvailableCameraIsFileWidgetImport):
     
         self.checkBox.clicked.connect(self.on_checkbox_work_clicked)
         
-        #self.checkBox_2.setChecked(True)
-        #self.checkBox_2.clicked.connect(self.on_checkbox_show_processing_result)
-        
         self.checkBox_3.setChecked(True)
         self.checkBox_3.clicked.connect(self.on_checkbox_loop)
         
-    """def on_checkbox_show_processing_result(self, checked):
-        if checked:
-            self.show_processing_result_Signal.emit(self.file_path, checked)
-        else:
-            self.show_processing_result_Signal.emit(self.file_path, checked)
-    """
     def on_checkbox_loop(self, checked):
         if checked:
             self.loop_Signal.emit(self.file_path, checked)

@@ -5,6 +5,11 @@ import time
 from functions import time_time_to_formatted_time
 
 class ImageDisplayWidget(QWidget):
+    """Віджет зображень
+
+    Args:
+        QWidget (_type_): _description_
+    """
     imageClosed = pyqtSignal()
 
     def __init__(self, image_array, parent=None):
@@ -63,6 +68,11 @@ class ImageDisplayWidget(QWidget):
 
 
 class HoverLabel(QLabel):
+    """Лейб який реалізовує показ зображення при натиску на нього
+
+    Args:
+        QLabel (_type_): _description_
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumSize(50, 50)
@@ -100,6 +110,11 @@ class HoverLabel(QLabel):
 
 
 class CustomWidgetSingleLog(QWidget):
+    """Реалізує віджет строку логу що візуально показується користувачеві
+
+    Args:
+        QWidget (_type_): _description_
+    """
     def __init__(self):
         super().__init__()
         self.init_ui()

@@ -2,6 +2,8 @@
 from framework import QMutexContextManager
 
 class AvailableCameraGenIdx:
+    """Дає індекси і зберігає їх для контролеру камер і потоків із файлів
+    """
     def __init__(self):
         self.locker = QMutexContextManager()
         self.already_created_index = {}
