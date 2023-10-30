@@ -9,6 +9,8 @@ from db import load_all_params_settings, session, params_dict, save_one_params_s
 
 from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout
 
+from functions import print_exception_info
+
 class ParamWidget(QWidget):
     """Віджет параметру який показує параметер і обробляє різні типи параметрів
 
@@ -45,30 +47,35 @@ class ParamWidget(QWidget):
     def set_values(self, label_text, text_text, original_value):
         self.original_value = original_value
         
-        if isinstance(text_text, int):
+        if isinstance(text_text, bool):
+            self.text_input_bool = True
+        elif isinstance(text_text, int):
             self.text_input_int = True
         elif isinstance(text_text, float):
             self.text_input_float = True
-        elif isinstance(text_text, bool):
-            self.text_input_bool = True
             
         self.label.setText(str(label_text))
         self.text_edit.setText(str(text_text))
     
     def get_values(self):
         val = None
-        if self.text_input_int is True:
-            val = int(self.text_edit.text()) 
-        elif self.text_input_float is True:
-            val = float(self.text_edit.text())
-        elif self.text_input_bool is True: 
-            val = bool(True if self.text_edit.text() == "True" or self.text_edit.text() == "true" else False)
-        else:
-            val = str(self.text_edit.text())
-        
-        if val is None:
-            val = self.original_value
-        
+        try:
+            text_input = self.text_edit.text()
+            if self.text_input_int is True:
+                val = int(text_input) 
+            elif self.text_input_float is True:
+                val = float(text_input)
+            elif self.text_input_bool is True: 
+                val = bool(True if text_input == "True" or text_input == "true" else False)
+            else:
+                val = str(text_input)
+            
+            if val is None:
+                val = self.original_value
+        except Exception as ex:
+            print_exception_info(ex)
+            pass
+            
         return (self.label.text(), val)
 
 class SettingsView(QWidget, Settings_ui_Form):

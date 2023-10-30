@@ -2,7 +2,7 @@
 from db import Parameter, session, params_dict, start_load_save_params
 
 
-yolov8_detect_model_path = r"yolov8n.pt"
+yolov8_detect_model_path = "yolov8x-seg.pt"
 
 main_process_count_frames = 1
 main_process_timer_timestep = 300

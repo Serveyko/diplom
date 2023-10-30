@@ -81,7 +81,7 @@ def delete_human_from_db(session, db_id):
 
 """Далі описано параметри по замовчанню і всі вони є основою для бд"""
 params_dict = {
-    'yolov8_detect_model_path': r"yolov8n.pt",
+    'yolov8_detect_model_path': "yolov8x-seg.pt",
     'main_process_timer_timestep': 300,
     'main_process_timer_small_timestep': 30,
     'standart_width': 600,

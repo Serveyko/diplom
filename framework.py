@@ -53,7 +53,7 @@ def to_list(elem):
 
 def test_multy_issubset(a, b):
     """Аналіз двох множин чи мають перетин 
-
+    Якщо одне входить в інше, то
     Args:
         a (_type_): _description_
         b (_type_): _description_
@@ -100,7 +100,7 @@ def get_mean_points(points_baggage, points_human):
 
 def ltrb_to_ltwh(ltrb):
     """Конвертує бокс ліво верх право низ в ліво верх ширина висота
-
+    Повертає координати боксу, для обробки
     Args:
         ltrb (_type_): _description_
 
@@ -115,6 +115,7 @@ def ltrb_to_ltwh(ltrb):
 
 def ltwh_to_ltrb(ltwh):
     """Конвертує бокс ліво верх ширина висота в ліво верх право низ
+    Повертає координати боксу, для обробки
 
     Args:
         ltwh (_type_): _description_
@@ -529,11 +530,14 @@ class TrackersCapacitor:
         # Видалити значення за вказаним індексом, якщо індекс існує
         if index in self.tracker:
             del self.trackers[index]
-            
+
+            # індекс - камера
     def create_basic_tracker(self, index_create=0):
         if self.get(index_create) is None:
             #embedder = 'clip_ViT-B/16'
             #embedder = 'mobilenet'
+            #треба для того, щоб кожного разу знаходити однуй й ту саму людину. В ньому зберігається якийсь об'єкт (багаж/людина/будь що).
+            #якщо зрозуміє, що це один і той самий об'єкт, поверне той самий об'єкт, інакше - створить новий
             tracker = DeepSort(
                 max_age=create_basic_tracker_deepsort_max_age, 
                 embedder=create_basic_tracker_deepsort_embedder, 
@@ -541,7 +545,8 @@ class TrackersCapacitor:
                 embedder_gpu=create_basic_tracker_deepsort_embedder_gpu
             )
             self.put(index_create, tracker )
-    
+
+    # index1, index2 - внутрішні параметри людини
     def get_uid_human(self, id_camera, index1, index2):
         with self.locker:
             key = (id_camera, index1, index2)
@@ -799,6 +804,7 @@ class Pair:
                 larr = exponential_moving_average(larr, self.magic_one)
             
             if larr is not None:
+                # порогове значення - межа, за допомогою якої ми розуміємо чи э пересічення
                 if larr[-1] > self.threshold_one:
                     self.state_array.append(1)
                 else:
@@ -837,10 +843,12 @@ class Entity:
     """
     def __init__(self) -> None:
         self.current_id = trackers_capacitor.get_uid_entity()
+        # - одна й та сама людина в різні моменти часу,
         self.humans = []
         self.bags = []
         self.pairs = []
-        
+
+        # - група сумок - одна сумка в багатьох варіаціях фантомного виявлення
         self.bag_group = []
         
         self.images_with_camera_id = []
@@ -962,8 +970,10 @@ class Entity:
         if index_max < len(array_pts) and len(array_pts) > 0:
             return array_pts[index_max][-1][1][0], array_pts[index_max][-1][1][1]
         return None, None
-    
+
+    # шукає найкращі групи сумка-людина і об'єднує їх
     def get_bbox_best_group_bag(self, camera_id):
+        """Отримання найкращої сумки в групі по тому в кого найбільша довжина масиву боксів що означає що то є істинний об'єкт"""
         array_pts_group = []
         for index_group, single_group in enumerate(self.bag_group):
             if len(self.bag_group) > 1:
@@ -1030,7 +1040,7 @@ class Entity:
             self.bags.append(bag)
     
     def after_reconfig_bag_group(self, id_camera,  percent_area = entity_after_reconfig_bag_group_percent_area):
-        """Мержить групи після додавання за їх перетином
+        """Мержить групи після додавання за їх перетином по часу. Умовно є 1 сумка, яку задетектило, як різні, і ми їх мержимо за часом.
 
         Args:
             id_camera (_type_): _description_
@@ -1069,7 +1079,8 @@ class Entity:
                                         result.append((one_, two_))
             if len(result) > 0:
                 pass
-            list_merge_groups = [] 
+            list_merge_groups = []
+            #масив індексів групи
             for elem in result:
                 list_merge_groups.append((elem[0][3], elem[1][3]))
             not_merge_groups = []
@@ -1105,6 +1116,7 @@ class Entity:
         """
         input bag_group = [bag, bag, bag]
         self bag_group = [[bag, bag, bag], [bag, bag, bag], [bag, bag, bag]]
+        якщо хоч один елемент з input bag_group співпав з хоча б одним елементов масиву self bag_group, то докидуємо input bag_group в певний self bag_group
         """
         input_keys = [one_bag.bag_id for one_bag in bag_group if isinstance(one_bag, Bag)]
         
@@ -1494,9 +1506,12 @@ class EntityManager:
                     bah_bags = bags_and_humans_by_new_logs[i][1]
                     
                     for j, bah_old in enumerate(bags_and_humans_by_old_logs):
+                        """
+                        bah_old_humans - масив попередніх людей. 
+                        """
                         bah_old_humans = bah_old[0]
                         bah_old_bags = bah_old[1]
-                        
+
                         a = [val.human_id for val in bah_humans if isinstance(val, Human)]
                         b = [val.human_id for val in bah_old_humans if isinstance(val, Human)]
                         if test_multy_issubset(a, b):
@@ -1888,7 +1903,7 @@ class PairsManager:
             delta (_type_): _description_
             its_new_pair (_type_): _description_
             pone (_type_): _description_
-            limit_len (_type_): _description_
+            limit_len (_type_): _description_ - порогове значення для порівняння з довжиною вхідної пари
             pair_on_other_cameras (_type_): _description_
 
         Returns:
@@ -1903,7 +1918,7 @@ class PairsManager:
                         list(pone.bag.last_cam)[-1] != list(pone.human.last_cam)[-1] 
                         ):
                         state_add = True
-                        
+                # pone.get_len() - Довжина масиву пересічень.
                 if pone.get_len() > limit_len:
                     if delta is True:
                         state_add = True
@@ -1919,7 +1934,7 @@ class PairsManager:
                     if state_exist is False:
                         state_add = True
                     
-                
+                """pone - має масив станів чи є перетинів"""
                 if pone.get_len() == limit_len + 1:
                     for other_pair in pair_on_other_cameras:
                         if isinstance(other_pair, Pair):
@@ -1955,7 +1970,9 @@ class PairsManager:
             
             with self.locker:
                 
-                """Прохід по списку треків де є як люди так і сумки які визначаються і створюються"""
+                """
+                трек - об'єкт, який зберігає бокси, їх клас і тд
+                Прохід по списку треків де є як люди так і сумки які визначаються і створюються"""
                 for track in tracks:
                     if track.is_confirmed() is False or track.time_since_update > 1:
                         continue
@@ -2094,7 +2111,7 @@ class PairsManager:
                     pass
                 
                 result = []
-                """Повторна пост фільтрація по відстані"""
+                """Повторна пост фільтрація по відстані, визначає кому належить сумка по найближчій відстані сумки до людини"""
                 for i, pair_m in enumerate(array_pair):
                     state_add = True
                     bag_m = pair_m[8]
@@ -2157,7 +2174,7 @@ class PairsManager:
 
                 array_pair = list(unique_data.values())
                 
-                """Далі свторення самих пар яке і використовує форми попередньої обробки"""
+                """Далі створення самих пар яке і використовує форми попередньої обробки"""
                 
                 #якщо пара є оновити інакше створити 
                 pair_on_other_cameras = self.find_pair_on_other_cameras(id_camera)
@@ -2205,7 +2222,7 @@ class PairsManager:
                 for pone in array_pair_pre:
                     if isinstance(pone, Pair):
                         its_new_pair = False
-                        
+                        """0 - немає перетину пари сумка людина"""
                         current_state, delta = pone.update(0)
                         
                         state_add = self.test_pone(current_state, delta, its_new_pair, pone, limit_len, pair_on_other_cameras)
